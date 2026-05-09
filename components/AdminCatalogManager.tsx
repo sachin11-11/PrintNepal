@@ -103,7 +103,7 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
       event.currentTarget.reset();
       setEditingServiceId(null);
       setServiceForm(emptyServiceForm);
-      window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: `${type === "services" ? "Product" : "Material"} ${editingServiceId ? "updated" : "added"}.` }));
+      window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: `${type === "services" ? "Service" : "Material"} ${editingServiceId ? "updated" : "added"}.` }));
       await loadItems();
     } catch (submitError) {
       window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: submitError instanceof Error ? submitError.message : "Could not save item." }));
@@ -171,7 +171,7 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
     <section>
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-graphite">{type}</p>
-        <h1 className="mt-4 font-serif text-5xl text-ink">{type === "services" ? "Manage products." : "Material library."}</h1>
+        <h1 className="mt-4 font-serif text-5xl text-ink">{type === "services" ? "Add services." : "Material library."}</h1>
       </div>
       <form className="mt-8 grid gap-4 rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-sm lg:grid-cols-3" onSubmit={handleSubmit}>
         {type === "services" ? (
@@ -219,7 +219,7 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
         )}
         <div className="flex flex-col gap-3 lg:col-span-3 sm:flex-row">
           <button className="min-h-11 flex-1 rounded-full bg-ink px-5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-neutral-400" disabled={isSaving} type="submit">
-            {editingServiceId ? "Update product" : `Add ${type === "services" ? "product" : "material"}`}
+            {editingServiceId ? `Update ${type === "services" ? "service" : "material"}` : `Add ${type === "services" ? "services" : "material"}`}
           </button>
           {editingServiceId ? (
             <button

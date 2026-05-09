@@ -2,13 +2,12 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { TemplateCustomizationClient } from "@/components/TemplateCustomizationClient";
-import { getProductTemplateByIdentifier } from "@/lib/supabase/queries";
+import { getLocalTemplateByIdentifier } from "@/lib/templates/catalog";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomizeTemplatePage({ params }: { params: { templateId: string } }) {
-  const template = await getProductTemplateByIdentifier(params.templateId);
-
+export default function CustomizeTemplatePage({ params }: { params: { templateId: string } }) {
+  const template = getLocalTemplateByIdentifier(params.templateId);
   if (!template) {
     notFound();
   }

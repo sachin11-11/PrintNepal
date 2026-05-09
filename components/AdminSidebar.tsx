@@ -1,8 +1,11 @@
 const adminLinks = [
+  ["Sign in", "/admin/login"],
+  ["Overview", "/admin"],
   ["Dashboard", "/admin/dashboard"],
   ["Orders", "/admin/orders"],
-  ["Services", "/admin/services"],
+  ["Categories", "/admin/categories"],
   ["Designs", "/admin/designs"],
+  ["Add services", "/admin/services"],
   ["Materials", "/admin/materials"]
 ];
 

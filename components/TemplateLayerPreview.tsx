@@ -1,29 +1,71 @@
 import type { TemplateEditorValue } from "./TemplateEditor";
+import { resolveTemplateLayout } from "@/lib/templates/layout";
 
 type PreviewObject = {
   type?: string;
+  id?: string;
+  name?: string;
   text?: string;
   src?: string;
   left?: number;
   top?: number;
   width?: number;
   height?: number;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  opacity?: number;
   radius?: number;
   rx?: number;
+  ry?: number;
   fontSize?: number;
   fontWeight?: string;
   fontFamily?: string;
+  fontStyle?: string;
   textAlign?: "left" | "center" | "right";
+  letterSpacing?: number;
   angle?: number;
+  rotation?: number;
+  visible?: boolean;
+  clipShape?: "ellipse" | "rect";
+  placeholder?: boolean;
 };
 
-export function TemplateLayerPreview({ template }: { template: TemplateEditorValue }) {
-  const width = template.width ?? 640;
-  const height = template.height ?? 400;
-  const objects = (template.objects ?? []) as PreviewObject[];
+function estimateTextHeight(object: PreviewObject) {
+  const fontSize = object.fontSize ?? 18;
+  const lines = String(object.text ?? "").split("\n").length || 1;
+  return Math.ceil(lines * fontSize * 1.45 + 8);
+}
+
+export function TemplateLayerPreview({ template, isPreviewMode = true }: { template: TemplateEditorValue; isPreviewMode?: boolean }) {
+  const layout = resolveTemplateLayout(template);
+  const width = layout.width;
+  const height = layout.height;
+  const objects = layout.objects as PreviewObject[];
+
+  const clipPaths = objects
+    .filter((object) => object.visible !== false && object.type === "image" && object.clipShape === "ellipse" && object.src)
+    .map((object, index) => {
+      const x = object.left ?? object.x ?? 0;
+      const y = object.top ?? object.y ?? 0;
+      const objectWidth = object.width ?? object.w ?? 0;
+      const objectHeight = object.height ?? object.h ?? 0;
+      const cx = x + objectWidth / 2;
+      const cy = y + objectHeight / 2;
+      const rx = objectWidth / 2;
+      const ry = objectHeight / 2;
+      return {
+        id: object.id ?? `layer-${index}`,
+        cx,
+        cy,
+        rx,
+        ry
+      };
+    });
 
   function textAnchor(align?: string) {
     if (align === "center") return "middle";
@@ -39,8 +81,9 @@ export function TemplateLayerPreview({ template }: { template: TemplateEditorVal
   }
 
   function transformFor(object: PreviewObject) {
-    if (!object.angle) return undefined;
-    return `rotate(${object.angle} ${object.left ?? 0} ${object.top ?? 0})`;
+    const angle = object.angle ?? object.rotation ?? 0;
+    if (!angle) return undefined;
+    return `rotate(${angle} ${object.left ?? object.x ?? 0} ${object.top ?? object.y ?? 0})`;
   }
 
   return (
@@ -50,37 +93,52 @@ export function TemplateLayerPreview({ template }: { template: TemplateEditorVal
         className="h-full max-h-full w-full max-w-full overflow-visible drop-shadow-sm"
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`${layout.minX} ${layout.minY} ${width} ${height}`}
       >
-        <rect fill={template.background ?? "#ffffff"} height={height} rx="0" width={width} x="0" y="0" />
-          {objects.map((object, index) => {
+        <defs>
+          {clipPaths.map((clipPath) => (
+            <clipPath id={`clip-${clipPath.id}`} key={clipPath.id}>
+              <ellipse cx={clipPath.cx} cy={clipPath.cy} rx={clipPath.rx} ry={clipPath.ry} />
+            </clipPath>
+          ))}
+        </defs>
+        <rect fill={layout.background} height={height} rx="0" width={width} x={layout.minX} y={layout.minY} />
+        {objects.filter((object) => object.visible !== false).map((object, index) => {
             if (object.type === "rect") {
               return (
                 <rect
                   key={index}
                   fill={object.fill ?? "transparent"}
-                  height={object.height ?? 0}
+                  height={object.height ?? object.h ?? 0}
                   rx={object.rx ?? 0}
+                  ry={object.ry ?? object.rx ?? 0}
                   stroke={object.stroke}
                   strokeWidth={object.strokeWidth ?? 0}
+                  opacity={object.opacity ?? 1}
                   transform={transformFor(object)}
-                  width={object.width ?? 0}
-                  x={object.left ?? 0}
-                  y={object.top ?? 0}
+                  width={object.width ?? object.w ?? 0}
+                  x={object.left ?? object.x ?? 0}
+                  y={object.top ?? object.y ?? 0}
                 />
               );
             }
 
-            if (object.type === "circle") {
+            if (object.type === "circle" || object.type === "ellipse") {
+              const x = object.left ?? object.x ?? 0;
+              const y = object.top ?? object.y ?? 0;
+              const width = object.width ?? object.w ?? ((object.radius ?? 40) * 2);
+              const height = object.height ?? object.h ?? ((object.radius ?? 40) * 2);
               return (
-                <circle
+                <ellipse
                   key={index}
-                  cx={(object.left ?? 0) + (object.radius ?? 40)}
-                  cy={(object.top ?? 0) + (object.radius ?? 40)}
+                  cx={x + width / 2}
+                  cy={y + height / 2}
                   fill={object.fill ?? "transparent"}
-                  r={object.radius ?? 40}
+                  opacity={object.opacity ?? 1}
                   stroke={object.stroke}
                   strokeWidth={object.strokeWidth ?? 0}
+                  rx={width / 2}
+                  ry={height / 2}
                   transform={transformFor(object)}
                 />
               );
@@ -93,26 +151,30 @@ export function TemplateLayerPreview({ template }: { template: TemplateEditorVal
                   stroke={object.stroke ?? object.fill ?? "#111111"}
                   strokeLinecap="round"
                   strokeWidth={object.strokeWidth ?? 2}
+                  opacity={object.opacity ?? 1}
                   transform={transformFor(object)}
-                  x1={object.left ?? 0}
-                  x2={(object.left ?? 0) + (object.width ?? 120)}
-                  y1={object.top ?? 0}
-                  y2={(object.top ?? 0) + (object.height ?? 0)}
+                  x1={object.left ?? object.x ?? 0}
+                  x2={(object.left ?? object.x ?? 0) + (object.width ?? object.w ?? 120)}
+                  y1={object.top ?? object.y ?? 0}
+                  y2={(object.top ?? object.y ?? 0) + (object.height ?? object.h ?? 0)}
                 />
               );
             }
 
             if (object.type === "image" && object.src) {
+              const clipId = object.clipShape === "ellipse" ? `clip-${object.id ?? `layer-${index}`}` : undefined;
               return (
                 <image
                   key={index}
-                  height={object.height ?? 120}
+                  height={object.height ?? object.h ?? 120}
                   href={object.src}
-                  preserveAspectRatio="xMidYMid slice"
+                  preserveAspectRatio={object.clipShape === "rect" ? "xMidYMid meet" : "xMidYMid slice"}
+                  opacity={object.opacity ?? 1}
+                  clipPath={clipId ? `url(#${clipId})` : undefined}
                   transform={transformFor(object)}
-                  width={object.width ?? 120}
-                  x={object.left ?? 0}
-                  y={object.top ?? 0}
+                  width={object.width ?? object.w ?? 120}
+                  x={object.left ?? object.x ?? 0}
+                  y={object.top ?? object.y ?? 0}
                 />
               );
             }
@@ -122,40 +184,56 @@ export function TemplateLayerPreview({ template }: { template: TemplateEditorVal
                 <rect
                   key={index}
                   fill="rgba(255,255,255,0.35)"
-                  height={object.height ?? 120}
+                  height={object.height ?? object.h ?? 120}
                   stroke="#94a3b8"
                   strokeDasharray="8 8"
                   strokeWidth="2"
-                  width={object.width ?? 120}
-                  x={object.left ?? 0}
-                  y={object.top ?? 0}
+                  width={object.width ?? object.w ?? 120}
+                  x={object.left ?? object.x ?? 0}
+                  y={object.top ?? object.y ?? 0}
                 />
               );
             }
 
             const lines = String(object.text ?? "").split("\n");
+            const textHeight = object.height ?? estimateTextHeight(object);
             return (
-              <text
-                key={index}
-                fill={object.fill ?? "#111111"}
-                fontFamily={object.fontFamily ?? "Inter, Arial, sans-serif"}
-                fontSize={object.fontSize ?? 18}
-                fontWeight={object.fontWeight}
-                textAnchor={textAnchor(object.textAlign)}
-                transform={transformFor(object)}
-                x={textX(object)}
-                y={(object.top ?? 0) + (object.fontSize ?? 18)}
-              >
-                {lines.map((line, lineIndex) => (
-                  <tspan
-                    key={lineIndex}
-                    dy={lineIndex === 0 ? 0 : (object.fontSize ?? 18) * 1.2}
-                    x={textX(object)}
-                  >
-                    {line}
-                  </tspan>
-                ))}
-              </text>
+              <g key={index} transform={transformFor(object)}>
+                {!isPreviewMode ? (
+                  <rect
+                    fill="transparent"
+                    height={textHeight}
+                    stroke="rgba(124,58,237,0.18)"
+                    strokeDasharray="4 4"
+                    strokeWidth="1"
+                    width={object.width ?? object.w ?? 0}
+                    x={object.left ?? object.x ?? 0}
+                    y={object.top ?? object.y ?? 0}
+                  />
+                ) : null}
+                <text
+                  fill={object.fill ?? "#111111"}
+                  fontFamily={object.fontFamily ?? "Inter, Arial, sans-serif"}
+                  fontSize={object.fontSize ?? 18}
+                  fontWeight={object.fontWeight}
+                  fontStyle={object.fontStyle}
+                  letterSpacing={object.letterSpacing}
+                  opacity={object.opacity ?? 1}
+                  textAnchor={textAnchor(object.textAlign)}
+                  x={textX(object)}
+                  y={(object.top ?? object.y ?? 0) + (object.fontSize ?? 18)}
+                >
+                  {lines.map((line, lineIndex) => (
+                    <tspan
+                      key={lineIndex}
+                      dy={lineIndex === 0 ? 0 : (object.fontSize ?? 18) * 1.2}
+                      x={textX(object)}
+                    >
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
             );
           })}
       </svg>

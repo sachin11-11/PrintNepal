@@ -20,6 +20,7 @@ export async function getServices(options?: {
   const { data, error } = await supabase
     .from("services")
     .select("*")
+    .eq("slug", "wedding-catalogs-cards")
     .order("is_featured", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -48,6 +49,7 @@ export async function searchServices(
   const { data, error } = await supabase
     .from("services")
     .select("*")
+    .eq("slug", "wedding-catalogs-cards")
     .or(
       [
         `title.ilike.%${escapedQuery}%`,

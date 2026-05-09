@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-export function AdminLoginForm() {
+export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +29,9 @@ export function AdminLoginForm() {
       return;
     }
 
+    document.cookie = `printnepal-admin-session=1; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
     window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: "Signed in." }));
-    router.push("/admin/dashboard");
+    window.location.assign(nextPath ?? "/admin/dashboard");
   }
 
   return (

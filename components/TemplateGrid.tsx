@@ -8,7 +8,7 @@ export function TemplateGrid({ templates }: { templates: ProductTemplateWithServ
       {templates.map((template) => (
         <a key={template.id} className="group overflow-hidden rounded-[1.5rem] border border-black/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-soft" href={`/templates/${template.id}`}>
           <div className="aspect-[4/3] bg-mist transition duration-500 group-hover:scale-[1.01]">
-            <TemplateLayerPreview template={template.template_json as TemplateEditorValue} />
+            <TemplateLayerPreview isPreviewMode template={template.template_json as TemplateEditorValue} />
           </div>
           <div className="p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-graphite">{template.category ?? template.services?.title ?? "Template"}</p>

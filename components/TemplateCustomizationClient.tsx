@@ -24,11 +24,12 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
   const fields = useMemo(() => (Array.isArray(template.editable_fields) ? template.editable_fields as FieldConfig[] : []), [template.editable_fields]);
   const [values, setValues] = useState<Record<string, string>>({});
   const [customer, setCustomer] = useState({
-    customer_name: "",
-    email: "",
-    phone: "",
+    customer_name: "PrintNepal Customer",
+    email: "customer@printnepal.com",
+    phone: "+977-9800000000",
     quantity: "1",
     material: "Standard cardstock",
+    paper_size: template.category ?? "Custom",
     notes: ""
   });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -40,11 +41,6 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
     : null;
   const deliveryMinutes = distanceKm === null ? null : estimateDeliveryMinutes(distanceKm);
   const completionMinutes = estimateCompletionMinutes(template.services?.title ?? template.title);
-
-  function updateValue(field: string, value: string) {
-    setValues((current) => ({ ...current, [field]: value }));
-    editorRef.current?.updateField(field, value);
-  }
 
   function useMyLocation() {
     if (!navigator.geolocation) return;
@@ -66,10 +62,13 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           template_id: template.id,
+          template_title: template.title,
+          template_category: template.category,
+          template_service_title: template.services?.title ?? null,
           ...customer,
           customer_lat: location?.lat ?? null,
           customer_lng: location?.lng ?? null,
-          final_design_png: editorRef.current?.exportPng(),
+          final_design_png: await editorRef.current?.exportPng(),
           final_design_json: editorRef.current?.exportJson()
         })
       });
@@ -88,7 +87,7 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_26rem]">
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <TemplateEditor
         ref={editorRef}
         category={template.category}
@@ -96,36 +95,39 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
         template={template.template_json as TemplateEditorValue}
         values={values}
       />
-      <form className="relative z-20 grid gap-5 rounded-[2rem] border border-black/10 bg-white p-5 shadow-soft" onSubmit={submitOrder}>
+      <form className="sticky top-4 z-20 grid gap-4 rounded-[2rem] border border-black/10 bg-white p-5 shadow-soft" onSubmit={submitOrder}>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">{template.category}</p>
           <h1 className="mt-3 font-serif text-4xl text-ink">{template.title}</h1>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <input className="min-h-12 rounded-full border border-black/10 px-4" onChange={(event) => setCustomer((current) => ({ ...current, customer_name: event.target.value }))} placeholder="Customer name" required value={customer.customer_name} />
-          <input className="min-h-12 rounded-full border border-black/10 px-4" onChange={(event) => setCustomer((current) => ({ ...current, email: event.target.value }))} placeholder="Email" required type="email" value={customer.email} />
-          <input className="min-h-12 rounded-full border border-black/10 px-4" onChange={(event) => setCustomer((current) => ({ ...current, phone: event.target.value }))} placeholder="Phone" required value={customer.phone} />
-          <input className="min-h-12 rounded-full border border-black/10 px-4" min="1" onChange={(event) => setCustomer((current) => ({ ...current, quantity: event.target.value }))} placeholder="Quantity" required type="number" value={customer.quantity} />
-        </div>
-        <input className="min-h-12 rounded-full border border-black/10 px-4" onChange={(event) => setCustomer((current) => ({ ...current, material: event.target.value }))} placeholder="Material" value={customer.material} />
-        <div className="grid gap-4">
-          {fields.map((field) => (
+        <input type="hidden" name="customer_name" value={customer.customer_name} readOnly />
+        <input type="hidden" name="email" value={customer.email} readOnly />
+        <input type="hidden" name="phone" value={customer.phone} readOnly />
+        <input type="hidden" name="quantity" value={customer.quantity} readOnly />
+        <input type="hidden" name="material" value={customer.material} readOnly />
+        <input type="hidden" name="paper_size" value={customer.paper_size} readOnly />
+        <input type="hidden" name="notes" value={customer.notes} readOnly />
+        <input type="hidden" name="design_method" value="uploaded" readOnly />
+
+        <div className="grid gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-graphite">Photo / logo uploads</p>
+          {fields.filter(isImageField).map((field) => (
             <label key={field} className="grid gap-2 text-sm font-medium text-ink">
               {labelForField(field)}
-              {isImageField(field) ? (
-                <input className="rounded-full border border-dashed border-black/20 bg-mist px-4 py-3 text-sm text-graphite" accept="image/*" onChange={(event) => {
+              <input
+                className="rounded-full border border-dashed border-black/20 bg-mist px-4 py-3 text-sm text-graphite"
+                accept="image/*"
+                onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (!file) return;
                   const objectUrl = URL.createObjectURL(file);
                   editorRef.current?.replaceImage(field, objectUrl);
-                }} type="file" />
-              ) : (
-                <input className="min-h-12 rounded-full border border-black/10 px-4" onChange={(event) => updateValue(field, event.target.value)} placeholder={labelForField(field)} type={field === "color" ? "color" : "text"} value={values[field] ?? ""} />
-              )}
+                }}
+                type="file"
+              />
             </label>
           ))}
         </div>
-        <textarea className="min-h-28 rounded-3xl border border-black/10 p-4" onChange={(event) => setCustomer((current) => ({ ...current, notes: event.target.value }))} placeholder="Notes" value={customer.notes} />
         <div className="rounded-3xl border border-black/10 bg-mist p-4 text-sm text-graphite">
           <p className="font-medium text-ink">Delivery estimate</p>
           <p className="mt-2">Shop: {process.env.NEXT_PUBLIC_SHOP_ADDRESS ?? "Configure NEXT_PUBLIC_SHOP_ADDRESS"}</p>
@@ -137,7 +139,7 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
           <p className="mt-2">Estimated print completion: {completionMinutes} min</p>
         </div>
         <button className="relative z-20 min-h-12 rounded-full bg-ink px-6 text-sm font-medium text-white disabled:bg-neutral-400" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Submitting..." : "Submit customized order"}
+          {isSubmitting ? "Sending..." : "Send"}
         </button>
       </form>
     </div>

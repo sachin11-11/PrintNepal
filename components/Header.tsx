@@ -6,15 +6,17 @@ export function Header() {
           PRINTNEPAL
         </a>
         <nav className="hidden items-center gap-8 text-sm text-graphite md:flex" aria-label="Primary navigation">
-          <a className="transition hover:text-ink" href="/services">Services</a>
-          <a className="transition hover:text-ink" href="/search">Search</a>
+          <a className="transition hover:text-ink" href="/templates">Templates</a>
+          <a className="transition hover:text-ink" href="/templates/wedding-card-01">Wedding Card</a>
+          <a className="transition hover:text-ink" href="/templates/student-id-card-01">ID Card</a>
+          <a className="transition hover:text-ink" href="mailto:hello@printnepal.com">Contact</a>
           <a className="transition hover:text-ink" href="/track-order">Track Order</a>
         </nav>
         <a
-          href="/order"
+          href="/customize/wedding-card-01"
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-ink bg-ink px-5 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-black"
         >
-          Send Design
+          Customize
         </a>
       </div>
     </header>
