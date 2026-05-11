@@ -15,7 +15,7 @@ export function StatusBadge({ status }: { status: string }) {
   const label = status.replace(/_/g, " ").replace(/^\w/, (letter) => letter.toUpperCase());
 
   return (
-    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${styles[status] ?? styles.Draft}`}>
+    <span className={`inline-flex border px-3 py-1 text-xs font-bold ${styles[status] ?? styles.Draft}`}>
       {label}
     </span>
   );

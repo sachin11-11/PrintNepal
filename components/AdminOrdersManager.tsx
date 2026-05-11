@@ -83,26 +83,26 @@ export function AdminOrdersManager() {
     <section>
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-graphite">Orders</p>
-          <h1 className="mt-4 font-serif text-5xl text-ink">Order queue.</h1>
+          <p className="eyebrow">Orders</p>
+          <h1 className="mt-4 text-5xl font-black text-ink">Order queue.</h1>
           <p className="mt-3 text-sm text-graphite">{isLoading ? "Loading orders..." : `${total} orders`}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <select className="min-h-11 rounded-full border border-black/10 bg-white px-4 text-sm text-ink" onChange={(event) => {
+          <select className="min-h-11 border border-ink/10 bg-white px-4 text-sm font-semibold text-ink" onChange={(event) => {
             setStatus(event.target.value);
             loadOrders(event.target.value, paymentStatus, serviceId);
           }} value={status}>
             <option value="all">All statuses</option>
             {orderStatuses.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <select className="min-h-11 rounded-full border border-black/10 bg-white px-4 text-sm text-ink" onChange={(event) => {
+          <select className="min-h-11 border border-ink/10 bg-white px-4 text-sm font-semibold text-ink" onChange={(event) => {
             setPaymentStatus(event.target.value);
             loadOrders(status, event.target.value, serviceId);
           }} value={paymentStatus}>
             <option value="all">All payments</option>
             {paymentStatuses.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <select className="min-h-11 rounded-full border border-black/10 bg-white px-4 text-sm text-ink" onChange={(event) => {
+          <select className="min-h-11 border border-ink/10 bg-white px-4 text-sm font-semibold text-ink" onChange={(event) => {
             setServiceId(event.target.value);
             loadOrders(status, paymentStatus, event.target.value);
           }} value={serviceId}>
@@ -111,12 +111,12 @@ export function AdminOrdersManager() {
           </select>
         </div>
       </div>
-      {error ? <p className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="mt-8 border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
       {!error && !isLoading && orders.length === 0 ? (
-        <p className="mt-8 rounded-2xl border border-black/10 bg-white p-5 text-sm text-graphite">No orders found.</p>
+        <p className="mt-8 border border-black/10 bg-white p-5 text-sm text-graphite">No orders found.</p>
       ) : null}
       {orders.length > 0 ? (
-        <div className="mt-8 overflow-x-auto rounded-[1.5rem] border border-black/10 bg-white shadow-sm">
+        <div className="mt-8 overflow-x-auto border border-ink/10 bg-white shadow-sm">
           <table className="w-full min-w-[1320px] text-left text-sm">
             <thead className="bg-mist text-xs uppercase tracking-[0.16em] text-graphite">
               <tr>

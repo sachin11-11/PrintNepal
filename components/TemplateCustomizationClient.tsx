@@ -1,12 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TemplateEditorHandle, TemplateEditorValue } from "./TemplateEditor";
 import type { ProductTemplateWithService } from "@/lib/supabase/queries";
 import { estimateCompletionMinutes, estimateDeliveryMinutes, haversineDistanceKm } from "@/lib/location/distance";
 
-import { TemplateEditor } from "./TemplateEditor";
+const PolotnoTemplateEditor = dynamic(() => import("./PolotnoTemplateEditor"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex min-h-[46rem] items-center justify-center rounded-xl border border-black/10 bg-white text-sm text-graphite shadow-sm">
+      Loading design editor...
+    </div>
+  )
+});
 
 type FieldConfig = string;
 
@@ -22,7 +30,7 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
   const router = useRouter();
   const editorRef = useRef<TemplateEditorHandle | null>(null);
   const fields = useMemo(() => (Array.isArray(template.editable_fields) ? template.editable_fields as FieldConfig[] : []), [template.editable_fields]);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [isEditorReady, setIsEditorReady] = useState(false);
   const [customer, setCustomer] = useState({
     customer_name: "PrintNepal Customer",
     email: "customer@printnepal.com",
@@ -88,12 +96,10 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
 
   return (
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <TemplateEditor
-        ref={editorRef}
-        category={template.category}
-        fields={fields}
+      <PolotnoTemplateEditor
+        editorHandleRef={editorRef}
+        onReady={() => setIsEditorReady(true)}
         template={template.template_json as TemplateEditorValue}
-        values={values}
       />
       <form className="sticky top-4 z-20 grid gap-4 rounded-[2rem] border border-black/10 bg-white p-5 shadow-soft" onSubmit={submitOrder}>
         <div>
@@ -138,8 +144,8 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
           )}
           <p className="mt-2">Estimated print completion: {completionMinutes} min</p>
         </div>
-        <button className="relative z-20 min-h-12 rounded-full bg-ink px-6 text-sm font-medium text-white disabled:bg-neutral-400" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Sending..." : "Send"}
+        <button className="relative z-20 min-h-12 rounded-full bg-ink px-6 text-sm font-medium text-white disabled:bg-neutral-400" disabled={isSubmitting || !isEditorReady} type="submit">
+          {isSubmitting ? "Sending..." : isEditorReady ? "Send" : "Loading editor..."}
         </button>
       </form>
     </div>

@@ -23,16 +23,16 @@ export default async function OrderConfirmationPage({
   return (
     <main>
       <Header />
-      <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
-        <div className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-soft sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-graphite">Order confirmation</p>
+      <section className="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
+        <div className="print-panel p-6 sm:p-8">
+          <p className="eyebrow">Order confirmation</p>
           {order ? (
             <>
-              <h1 className="mt-4 font-serif text-5xl leading-tight text-ink">Order received.</h1>
+              <h1 className="mt-4 text-5xl font-black leading-tight text-ink">Order received.</h1>
               <p className="mt-5 text-sm leading-6 text-graphite">
                 Keep this order ID for tracking and communication with PrintNepal.
               </p>
-              <div className="mt-8 grid gap-4 rounded-3xl border border-black/10 bg-mist p-5">
+              <div className="mt-8 grid gap-4 border border-black/10 bg-mist p-5">
                 <div>
                   <span className="text-xs uppercase tracking-[0.18em] text-graphite">Order ID</span>
                   <p className="mt-2 break-all font-mono text-sm text-ink">{order.id}</p>
@@ -42,14 +42,14 @@ export default async function OrderConfirmationPage({
                   <StatusBadge status={order.status} />
                 </div>
               </div>
-              <a className="mt-6 inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-medium text-white" href="/track-order">
+              <a className="link-block mt-6" href="/track-order">
                 Track Order
               </a>
               <WhatsAppOrderCard whatsappLink={order.whatsapp_link ?? ""} />
             </>
           ) : (
             <>
-              <h1 className="mt-4 font-serif text-5xl leading-tight text-ink">Order not found.</h1>
+              <h1 className="mt-4 text-5xl font-black leading-tight text-ink">Order not found.</h1>
               <p className="mt-5 text-sm leading-6 text-graphite">The confirmation link is missing a valid order ID.</p>
             </>
           )}

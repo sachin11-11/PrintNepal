@@ -1,34 +1,38 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { OrderForm } from "@/components/OrderForm";
-import { getMaterials, getProductDesigns, getServices } from "@/lib/supabase/queries";
 
 export const metadata = {
-  title: "Start Order | PrintNepal",
-  description: "Send a print order request to PrintNepal with service, material, quantity, and design file details."
+  title: "Print Order | PrintNepal",
+  description: "Choose a print product, configure quantity and delivery, pay with a Nepali wallet, and place an order."
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function OrderPage() {
-  const [services, materials] = await Promise.all([
-    getServices(),
-    getMaterials()
-  ]);
-  const designs = await getProductDesigns().catch(() => []);
-
+export default function OrderPage({
+  searchParams
+}: {
+  searchParams?: { product?: string };
+}) {
   return (
     <main>
       <Header />
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:px-10">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-graphite">Send design</p>
-          <h1 className="mt-4 font-serif text-5xl leading-tight text-ink sm:text-6xl">Start a print order.</h1>
-          <p className="mt-6 text-lg leading-8 text-graphite">
-            Share the product, quantity, material, and deadline. File upload is static for now and will connect to Supabase Storage later.
+      <section className="print-band">
+        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
+        <div className="mb-8 grid gap-5 border-l-4 border-press bg-white/75 p-5 lg:grid-cols-[1fr_22rem] lg:items-end">
+          <div>
+          <p className="eyebrow">Print order</p>
+          <h1 className="mt-4 text-4xl font-black leading-tight text-ink sm:text-6xl">Order print products without friction.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-graphite">
+            Select an item, configure size, paper, quantity, delivery, and payment in one continuous flow.
           </p>
+          </div>
+          <div className="border border-ink/10 bg-mist p-4 text-sm leading-6 text-graphite">
+            The quote and production steps appear only after a product is selected.
+          </div>
         </div>
-        <OrderForm designs={designs} materials={materials} services={services} />
+        <OrderForm initialProductId={searchParams?.product} />
+        </div>
       </section>
       <Footer />
     </main>

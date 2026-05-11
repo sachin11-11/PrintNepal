@@ -1,15 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import { ArrowIcon, SearchIcon } from "./Icons";
-import { TemplateLayerPreview } from "./TemplateLayerPreview";
-import { searchLocalTemplates } from "@/lib/templates/catalog";
-import type { TemplateEditorValue } from "./TemplateEditor";
+import { getRankedLocalTemplateMatches } from "@/lib/templates/catalog";
 
 type LiveSearchProps = {
   suggestions: string[];
   initialQuery?: string;
+};
+
+const categoryLabels: Record<string, string> = {
+  wedding: "Wedding cards",
+  "id-card": "Student ID cards",
+  "student-id": "Student ID cards",
+  business: "Business cards",
+  birthday: "Birthday cards",
+  sticker: "Stickers",
+  "laptop-skin": "Laptop skins"
 };
 
 export function LiveSearch({ suggestions, initialQuery = "" }: LiveSearchProps) {
@@ -17,23 +24,22 @@ export function LiveSearch({ suggestions, initialQuery = "" }: LiveSearchProps) 
 
   const results = useMemo(
     () =>
-      searchLocalTemplates(query).map((template) => ({
+      getRankedLocalTemplateMatches(query).slice(0, 6).map((template) => ({
         id: template.id,
         title: template.title,
-        description: template.category === "id-card" ? "Editable student identity card template." : "Editable wedding invitation template.",
         href: `/templates/${template.slug}`,
-        meta: template.category ?? "Template",
-        imageUrl: template.thumbnail_url,
-        templateJson: template.template_json
+        meta: template.category ? categoryLabels[template.category] ?? template.category : "Template",
+        detail: template.services?.title ?? "Editable print template"
       })),
     [query]
   );
 
-  const showResult = query.trim().length >= 2;
+  const trimmedQuery = query.trim();
+  const showDropdown = trimmedQuery.length > 0;
 
   return (
     <div>
-      <form className="max-w-2xl" action="/search" aria-label="Search templates">
+      <form className="relative max-w-2xl" action="/search" aria-label="Search templates">
         <div className="flex min-h-16 items-center gap-3 rounded-full border border-black/10 bg-white px-5 shadow-sm">
           <span className="text-graphite">
             <SearchIcon />
@@ -50,6 +56,39 @@ export function LiveSearch({ suggestions, initialQuery = "" }: LiveSearchProps) 
             Search
           </button>
         </div>
+
+        {showDropdown ? (
+          <div className="absolute left-0 right-0 top-full z-30 mt-3 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-soft">
+            {results.length ? (
+              <div className="max-h-96 overflow-y-auto py-2" role="listbox" aria-label="Matching templates">
+                {results.map((result, index) => (
+                  <a
+                    aria-selected={index === 0}
+                    className="flex items-center justify-between gap-4 px-4 py-3 text-left transition hover:bg-mist"
+                    href={result.href}
+                    key={result.id}
+                    role="option"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-ink">{result.title}</span>
+                      <span className="mt-1 block truncate text-xs uppercase tracking-[0.14em] text-graphite">
+                        {index === 0 ? "Best match" : result.meta}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="hidden max-w-40 truncate text-xs text-graphite sm:block">{result.detail}</span>
+                      <span className="rounded-full border border-black/10 p-2 text-graphite">
+                        <ArrowIcon />
+                      </span>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-4 text-sm text-graphite">No matching templates.</div>
+            )}
+          </div>
+        ) : null}
       </form>
 
       <div className="mt-4 flex flex-wrap gap-3" aria-label="Search suggestions">
@@ -64,36 +103,6 @@ export function LiveSearch({ suggestions, initialQuery = "" }: LiveSearchProps) 
           </button>
         ))}
       </div>
-
-      {showResult ? (
-        <div className="mt-4 grid max-w-4xl gap-4 sm:grid-cols-2">
-          {results.length ? results.map((result) => (
-            <a className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-md" href={result.href} key={result.id}>
-              <div className="aspect-[4/3] bg-mist">
-                {result.templateJson ? (
-                  <TemplateLayerPreview isPreviewMode template={result.templateJson as TemplateEditorValue} />
-                ) : result.imageUrl ? (
-                  <Image alt={`${result.title} preview`} className="h-full w-full object-cover" height={80} src={result.imageUrl} width={80} />
-                ) : null}
-              </div>
-              <div className="flex items-center justify-between gap-4 px-5 py-4">
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-ink">{result.title}</span>
-                  <span className="mt-1 block text-xs uppercase tracking-[0.16em] text-graphite">{result.meta}</span>
-                  <span className="mt-2 block text-sm leading-6 text-graphite">{result.description}</span>
-                </span>
-                <span className="shrink-0 rounded-full border border-black/10 p-2 text-graphite">
-                  <ArrowIcon />
-                </span>
-              </div>
-            </a>
-          )) : (
-            <div className="rounded-[1.5rem] border border-black/10 bg-white px-5 py-4 text-sm text-graphite">
-              No matching templates.
-            </div>
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }

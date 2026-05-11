@@ -14,12 +14,14 @@ export default function SearchPage({
   return (
     <main>
       <Header />
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-graphite">Search</p>
-        <h1 className="mt-4 max-w-3xl font-serif text-5xl leading-tight text-ink sm:text-6xl">Search wedding and ID cards.</h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-graphite">
-          Type wedding card or student ID card to filter the template catalog.
-        </p>
+      <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20 lg:px-10">
+        <div className="border-l-4 border-cyan bg-white/80 p-5">
+          <p className="eyebrow">Search</p>
+          <h1 className="mt-4 max-w-3xl text-5xl font-black leading-tight text-ink sm:text-6xl">Search design templates.</h1>
+          <p className="mt-6 max-w-2xl text-base leading-7 text-graphite">
+            Filter available editable templates and continue into customization.
+          </p>
+        </div>
         <div className="mt-8">
           <TemplateGrid templates={results} />
         </div>

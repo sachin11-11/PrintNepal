@@ -169,19 +169,19 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
 
   return (
     <section>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-graphite">{type}</p>
-        <h1 className="mt-4 font-serif text-5xl text-ink">{type === "services" ? "Add services." : "Material library."}</h1>
+      <div className="border-l-4 border-press bg-white/80 p-5">
+        <p className="eyebrow">{type}</p>
+        <h1 className="mt-4 text-5xl font-black text-ink">{type === "services" ? "Add services." : "Material library."}</h1>
       </div>
-      <form className="mt-8 grid gap-4 rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-sm lg:grid-cols-3" onSubmit={handleSubmit}>
+      <form className="print-panel mt-8 grid gap-4 p-5 lg:grid-cols-3" onSubmit={handleSubmit}>
         {type === "services" ? (
           <>
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="title" onChange={(event) => setServiceForm((current) => ({ ...current, title: event.target.value }))} placeholder="Product title" required value={serviceForm.title} />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="slug" onChange={(event) => setServiceForm((current) => ({ ...current, slug: event.target.value }))} placeholder="slug-name" required value={serviceForm.slug} />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="category" onChange={(event) => setServiceForm((current) => ({ ...current, category: event.target.value }))} placeholder="Category" value={serviceForm.category} />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="base_price" onChange={(event) => setServiceForm((current) => ({ ...current, base_price: event.target.value }))} placeholder="Base price" type="number" min="0" required value={serviceForm.base_price} />
-            <input className="min-h-11 rounded-full border border-black/10 px-4 lg:col-span-2" name="image_url" onChange={(event) => setServiceForm((current) => ({ ...current, image_url: event.target.value }))} placeholder="Image URL or upload below" value={serviceForm.image_url} />
-            <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-black/10 px-4 text-sm font-medium text-ink transition hover:border-black/25">
+            <input className="min-h-11 border border-ink/15 px-4" name="title" onChange={(event) => setServiceForm((current) => ({ ...current, title: event.target.value }))} placeholder="Product title" required value={serviceForm.title} />
+            <input className="min-h-11 border border-ink/15 px-4" name="slug" onChange={(event) => setServiceForm((current) => ({ ...current, slug: event.target.value }))} placeholder="slug-name" required value={serviceForm.slug} />
+            <input className="min-h-11 border border-ink/15 px-4" name="category" onChange={(event) => setServiceForm((current) => ({ ...current, category: event.target.value }))} placeholder="Category" value={serviceForm.category} />
+            <input className="min-h-11 border border-ink/15 px-4" name="base_price" onChange={(event) => setServiceForm((current) => ({ ...current, base_price: event.target.value }))} placeholder="Base price" type="number" min="0" required value={serviceForm.base_price} />
+            <input className="min-h-11 border border-ink/15 px-4 lg:col-span-2" name="image_url" onChange={(event) => setServiceForm((current) => ({ ...current, image_url: event.target.value }))} placeholder="Image URL or upload below" value={serviceForm.image_url} />
+            <label className="flex min-h-11 cursor-pointer items-center justify-center border border-ink/15 px-4 text-sm font-bold text-ink transition hover:border-black/25">
               Upload image
               <input
                 accept="image/*"
@@ -196,34 +196,34 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
                 type="file"
               />
             </label>
-            <label className="flex min-h-11 items-center gap-3 rounded-full border border-black/10 px-4 text-sm text-graphite">
+            <label className="flex min-h-11 items-center gap-3 border border-ink/15 px-4 text-sm text-graphite">
               <input checked={serviceForm.is_featured} name="is_featured" onChange={(event) => setServiceForm((current) => ({ ...current, is_featured: event.target.checked }))} type="checkbox" /> Featured
             </label>
             {serviceForm.image_url ? (
-              <div className="relative aspect-[16/9] overflow-hidden rounded-3xl border border-black/10 bg-mist lg:col-span-3">
+              <div className="relative aspect-[16/9] overflow-hidden border border-ink/10 bg-mist lg:col-span-3">
                 <Image alt="Product preview" className="h-full w-full object-cover" fill sizes="(min-width: 1024px) 60vw, 100vw" src={serviceForm.image_url} />
               </div>
             ) : null}
-            <textarea className="min-h-24 rounded-3xl border border-black/10 p-4 lg:col-span-3" name="description" onChange={(event) => setServiceForm((current) => ({ ...current, description: event.target.value }))} placeholder="Product description" value={serviceForm.description} />
-            <textarea className="min-h-28 rounded-3xl border border-black/10 p-4 lg:col-span-3" name="specifications" onChange={(event) => setServiceForm((current) => ({ ...current, specifications: event.target.value }))} placeholder="Specifications, one per line. Example: Paper: 300gsm cardstock" value={serviceForm.specifications} />
+            <textarea className="min-h-24 border border-ink/15 p-4 lg:col-span-3" name="description" onChange={(event) => setServiceForm((current) => ({ ...current, description: event.target.value }))} placeholder="Product description" value={serviceForm.description} />
+            <textarea className="min-h-28 border border-ink/15 p-4 lg:col-span-3" name="specifications" onChange={(event) => setServiceForm((current) => ({ ...current, specifications: event.target.value }))} placeholder="Specifications, one per line. Example: Paper: 300gsm cardstock" value={serviceForm.specifications} />
           </>
         ) : (
           <>
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="name" placeholder="Name" required />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="type" placeholder="Type" />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="size" placeholder="Size" />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="finish" placeholder="Finish" />
-            <input className="min-h-11 rounded-full border border-black/10 px-4" name="price_modifier" placeholder="Price modifier" type="number" min="0" required />
-            <textarea className="min-h-24 rounded-3xl border border-black/10 p-4 lg:col-span-3" name="description" placeholder="Description" />
+            <input className="min-h-11 border border-ink/15 px-4" name="name" placeholder="Name" required />
+            <input className="min-h-11 border border-ink/15 px-4" name="type" placeholder="Type" />
+            <input className="min-h-11 border border-ink/15 px-4" name="size" placeholder="Size" />
+            <input className="min-h-11 border border-ink/15 px-4" name="finish" placeholder="Finish" />
+            <input className="min-h-11 border border-ink/15 px-4" name="price_modifier" placeholder="Price modifier" type="number" min="0" required />
+            <textarea className="min-h-24 border border-ink/15 p-4 lg:col-span-3" name="description" placeholder="Description" />
           </>
         )}
         <div className="flex flex-col gap-3 lg:col-span-3 sm:flex-row">
-          <button className="min-h-11 flex-1 rounded-full bg-ink px-5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-neutral-400" disabled={isSaving} type="submit">
+          <button className="min-h-11 flex-1 bg-ink px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-neutral-400" disabled={isSaving} type="submit">
             {editingServiceId ? `Update ${type === "services" ? "service" : "material"}` : `Add ${type === "services" ? "services" : "material"}`}
           </button>
           {editingServiceId ? (
             <button
-              className="min-h-11 rounded-full border border-black/10 px-5 text-sm font-medium text-ink"
+              className="min-h-11 border border-black/10 px-5 text-sm font-bold text-ink"
               onClick={() => {
                 setEditingServiceId(null);
                 setServiceForm(emptyServiceForm);
@@ -235,11 +235,11 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
           ) : null}
         </div>
       </form>
-      {error ? <p className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
-      {!error && !isLoading && items.length === 0 ? <p className="mt-8 rounded-2xl border border-black/10 bg-white p-5 text-sm text-graphite">No items yet.</p> : null}
+      {error ? <p className="mt-8 border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
+      {!error && !isLoading && items.length === 0 ? <p className="mt-8 border border-black/10 bg-white p-5 text-sm text-graphite">No items yet.</p> : null}
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
-          <article key={item.id} className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-white shadow-sm">
+          <article key={item.id} className="overflow-hidden border border-ink/10 bg-white shadow-sm">
             {"image_url" in item && item.image_url ? (
               <div className="relative aspect-[4/3] bg-mist">
                 <Image alt={`${item.title} product`} className="h-full w-full object-cover" fill sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" src={item.image_url} />
