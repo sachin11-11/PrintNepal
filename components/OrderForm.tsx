@@ -17,6 +17,7 @@ import {
 
 type DesignMode = "upload" | "template" | "help";
 type FulfillmentMode = "pickup" | "delivery";
+type QuantityValue = number | "";
 
 type Receipt = {
   id: string;
@@ -30,7 +31,7 @@ const steps = ["Product", "Specs", "Design", "Fulfillment", "Payment"] as const;
 const categoryNames = ["All", ...Array.from(new Set(printCatalog.map((product) => product.category)))];
 
 const categoryVisuals: Record<string, { label: string; tone: string }> = {
-  All: { label: "ALL", tone: "bg-ink text-white" },
+  All: { label: "ALL", tone: "bg-[var(--solid)] text-[var(--solid-text)]" },
   "Business Stationery": { label: "DOC", tone: "bg-slate-100 text-slate-900" },
   Documents: { label: "TXT", tone: "bg-zinc-100 text-zinc-900" },
   Marketing: { label: "ADS", tone: "bg-amber-100 text-amber-950" },
@@ -215,7 +216,7 @@ function VisualCue({
       className={[
         "flex shrink-0 items-center justify-center overflow-hidden border font-bold uppercase tracking-[0.08em]",
         size === "sm" ? "h-8 w-8 text-[9px]" : size === "lg" ? "h-14 w-16 text-[11px]" : "h-11 w-11 text-[11px]",
-        active ? "border-white/30 bg-white text-ink" : `border-black/10 ${tone ?? "bg-mist text-ink"}`
+        active ? "border-white/30 bg-[var(--surface)] text-ink" : `border-black/10 ${tone ?? "bg-mist text-ink"}`
       ].join(" ")}
     >
       {image ? (
@@ -255,7 +256,7 @@ function OptionButton({
     <button
       className={[
         "min-h-16 rounded-lg border px-4 py-3 text-left transition",
-        active ? "border-ink bg-ink text-white" : "border-black/10 bg-white text-ink hover:border-black/25"
+        active ? "order-selected" : "border-black/10 bg-white text-ink hover:border-[var(--action)]"
       ].join(" ")}
       onClick={onClick}
       type="button"
@@ -264,7 +265,7 @@ function OptionButton({
         <VisualCue active={active} icon={visual.icon} image={visual.image} label={visual.label} tone={visual.tone} />
         <span className="min-w-0">
           <span className="block text-sm font-semibold">{label}</span>
-          {meta ? <span className={["mt-1 block text-xs", active ? "text-white/70" : "text-graphite"].join(" ")}>{meta}</span> : null}
+          {meta ? <span className={["mt-1 block text-xs", active ? "opacity-75" : "text-graphite"].join(" ")}>{meta}</span> : null}
         </span>
       </span>
     </button>
@@ -284,14 +285,14 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const product = printCatalog.find((item) => item.id === productId) ?? printCatalog[0];
   const availableSizes = allowedOptions(sizeOptions, product.sizes);
   const availablePapers = allowedOptions(paperOptions, product.paperTypes);
-  const [sizeId, setSizeId] = useState(initialProduct.sizes[0]);
-  const [paperId, setPaperId] = useState(initialProduct.paperTypes[0]);
-  const [finishingId, setFinishingId] = useState("none");
-  const [quantity, setQuantity] = useState(initialProduct.minQuantity);
-  const [designMode, setDesignMode] = useState<DesignMode>("upload");
+  const [sizeId, setSizeId] = useState("");
+  const [paperId, setPaperId] = useState("");
+  const [finishingId, setFinishingId] = useState("");
+  const [quantity, setQuantity] = useState<QuantityValue>("");
+  const [designMode, setDesignMode] = useState<DesignMode | "">("");
   const [fileName, setFileName] = useState("");
-  const [fulfillment, setFulfillment] = useState<FulfillmentMode>("pickup");
-  const [areaId, setAreaId] = useState("nearby");
+  const [fulfillment, setFulfillment] = useState<FulfillmentMode | "">("");
+  const [areaId, setAreaId] = useState("");
   const [location, setLocation] = useState("");
   const [geoLabel, setGeoLabel] = useState("");
   const [customer, setCustomer] = useState({
@@ -299,22 +300,41 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     phone: "",
     email: ""
   });
-  const [walletId, setWalletId] = useState("esewa");
+  const [walletId, setWalletId] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
 
-  const selectedSize = findOption(sizeOptions, availableSizes.some((item) => item.id === sizeId) ? sizeId : availableSizes[0].id);
-  const selectedPaper = findOption(paperOptions, availablePapers.some((item) => item.id === paperId) ? paperId : availablePapers[0].id);
-  const selectedFinishing = findOption(finishingOptions, finishingId);
-  const selectedArea = findOption(deliveryAreas, fulfillment === "pickup" ? "pickup" : areaId);
-  const quantityIsValid = isValidQuantity(quantity, product);
-  const effectiveQuantity = quantityIsValid ? quantity : product.minQuantity;
+  const selectedSize = availableSizes.find((item) => item.id === sizeId);
+  const selectedPaper = availablePapers.find((item) => item.id === paperId);
+  const selectedFinishing = finishingOptions.find((item) => item.id === finishingId);
+  const selectedArea = fulfillment === "pickup"
+    ? deliveryAreas.find((area) => area.id === "pickup")
+    : deliveryAreas.find((area) => area.id === areaId);
+  const quantityIsValid = typeof quantity === "number" && isValidQuantity(quantity, product);
+  const effectiveQuantity = quantityIsValid ? quantity : 0;
   const designCharge = designMode === "help" ? 750 : designMode === "template" ? 250 : 0;
-  const unitPrice = Math.max(1, product.basePrice * (selectedSize.multiplier ?? 1) + (selectedPaper.add ?? 0) + (selectedFinishing.add ?? 0));
+  const unitPrice = selectedSize && selectedPaper && selectedFinishing
+    ? Math.max(1, product.basePrice * (selectedSize.multiplier ?? 1) + (selectedPaper.add ?? 0) + (selectedFinishing.add ?? 0))
+    : 0;
   const printSubtotal = unitPrice * effectiveQuantity;
-  const deliveryFee = fulfillment === "delivery" ? selectedArea.add ?? 0 : 0;
+  const deliveryFee = fulfillment === "delivery" && selectedArea ? selectedArea.add ?? 0 : 0;
   const grandTotal = printSubtotal + designCharge + deliveryFee;
-  const canContinue = step !== 2 || quantityIsValid;
-  const canPlaceOrder = customer.name.trim() && customer.phone.trim() && quantityIsValid && (fulfillment === "pickup" || location.trim());
+  const specsComplete = Boolean(selectedSize && selectedPaper && selectedFinishing);
+  const designComplete = Boolean(quantityIsValid && designMode && (designMode !== "upload" || fileName));
+  const fulfillmentComplete = Boolean(
+    customer.name.trim() &&
+    customer.phone.trim() &&
+    customer.email.trim() &&
+    fulfillment &&
+    (fulfillment === "pickup" || (areaId && location.trim()))
+  );
+  const paymentComplete = Boolean(walletId);
+  const canContinue =
+    step === 1 ? specsComplete :
+    step === 2 ? designComplete :
+    step === 3 ? fulfillmentComplete :
+    true;
+  const canPlaceOrder = specsComplete && designComplete && fulfillmentComplete && paymentComplete;
+  const progressPercent = hasSelectedProduct ? Math.min(100, Math.max(0, Math.round((Math.min(step, 4) / 4) * 100))) : 0;
   const showSearchResults = query.trim().length > 0;
 
   const filteredProducts = useMemo(() => {
@@ -336,10 +356,17 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
 
   function selectProduct(nextProduct: PrintProduct) {
     setProductId(nextProduct.id);
-    setSizeId(nextProduct.sizes[0]);
-    setPaperId(nextProduct.paperTypes[0]);
-    setQuantity(nextProduct.minQuantity);
-    setFinishingId("none");
+    setSizeId("");
+    setPaperId("");
+    setQuantity("");
+    setFinishingId("");
+    setDesignMode("");
+    setFileName("");
+    setFulfillment("");
+    setAreaId("");
+    setLocation("");
+    setGeoLabel("");
+    setWalletId("");
     setHasSelectedProduct(true);
     setStep(1);
   }
@@ -374,38 +401,45 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
 
   const quoteRows = [
     ["Product", product.name],
-    ["Size", selectedSize.label],
-    ["Paper", selectedPaper.label],
-    ["Quantity", `${effectiveQuantity} ${product.unit}`],
+    ["Size", selectedSize?.label ?? "Required"],
+    ["Paper", selectedPaper?.label ?? "Required"],
+    ["Quantity", quantityIsValid ? `${effectiveQuantity} ${product.unit}` : "Required"],
     ["Admin-set MOQ", `${product.minQuantity} ${product.unit}`],
     ["Turnaround", `${product.turnaroundHours} hours`],
-    ["Design", designMode === "upload" ? fileName || "Own design upload" : designMode === "template" ? "Use PrintNepal template" : "Design help"],
-    ["Fulfillment", fulfillment === "pickup" ? "Pickup at shop" : selectedArea.label]
+    ["Design", designMode === "upload" ? fileName || "Upload required" : designMode === "template" ? "Use PrintNepal template" : designMode === "help" ? "Design help" : "Required"],
+    ["Fulfillment", fulfillment === "pickup" ? "Pickup at shop" : fulfillment === "delivery" ? selectedArea?.label ?? "Area required" : "Required"]
   ];
 
   return (
     <div className="print-panel overflow-hidden">
       {hasSelectedProduct ? (
       <div className="border-b border-ink/10 bg-mist px-5 py-4 sm:px-6">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid gap-3">
+          <div className="order-progress-track h-2 overflow-hidden" aria-hidden="true">
+            <div className="order-progress-fill h-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+          </div>
+          <div className="flex items-center justify-between gap-2">
           {steps.map((label, index) => (
             <button
+              aria-current={index === step ? "step" : undefined}
+              aria-label={`${label} step`}
               className={[
-                "flex min-h-9 items-center gap-2 border px-3 text-xs font-bold uppercase tracking-[0.14em] transition",
+                "flex h-10 w-10 items-center justify-center border text-xs font-black transition disabled:cursor-not-allowed",
                 index === step
-                  ? "border-ink bg-ink text-white"
+                  ? "order-selected"
                   : index < step
-                    ? "border-black/20 bg-white text-ink"
-                    : "border-black/10 bg-white/60 text-graphite"
+                    ? "border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]"
+                    : "border-black/10 bg-white/60 text-graphite disabled:opacity-45"
               ].join(" ")}
+              disabled={index > step}
               key={label}
               onClick={() => setStep(index)}
               type="button"
             >
-              <VisualCue active={index === step} label={String(index + 1)} size="sm" tone="bg-white text-ink" />
-              <span>{label}</span>
+              {index < step ? "✓" : index + 1}
             </button>
           ))}
+          </div>
         </div>
       </div>
       ) : null}
@@ -434,7 +468,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                     <button
                       className={[
                         "grid w-full gap-2 border-b border-black/10 px-4 py-3 text-left transition last:border-b-0 sm:grid-cols-[1fr_auto]",
-                        hasSelectedProduct && product.id === item.id ? "bg-ink text-white" : "bg-white text-ink hover:bg-mist"
+                        hasSelectedProduct && product.id === item.id ? "bg-[var(--solid)] text-[var(--solid-text)]" : "bg-white text-ink hover:bg-mist"
                       ].join(" ")}
                       key={item.id}
                       onClick={() => selectProduct(item)}
@@ -447,7 +481,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                             <span className="font-semibold">{item.name}</span>
                             {item.popular ? <span className="border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">Popular</span> : null}
                           </span>
-                          <span className={["mt-1 block text-sm", hasSelectedProduct && product.id === item.id ? "text-white/70" : "text-graphite"].join(" ")}>
+                          <span className={["mt-1 block text-sm", hasSelectedProduct && product.id === item.id ? "opacity-75" : "text-graphite"].join(" ")}>
                             {item.category} - min {item.minQuantity} {item.unit}
                           </span>
                         </span>
@@ -465,7 +499,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                   <button
                     className={[
                       "flex min-h-10 shrink-0 items-center gap-2 border px-3 text-sm font-semibold transition",
-                      category === name ? "border-ink bg-ink text-white" : "border-black/10 bg-white text-graphite hover:text-ink"
+                      category === name ? "border-[var(--solid)] bg-[var(--solid)] text-[var(--solid-text)]" : "border-black/10 bg-white text-graphite hover:text-ink"
                     ].join(" ")}
                     key={name}
                     onClick={() => setCategory(name)}
@@ -502,7 +536,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                         <span className="mt-2 block text-sm text-graphite">
                           Min {item.minQuantity} {item.unit} - from {currency(item.basePrice)}
                         </span>
-                        <span className="mt-4 inline-flex min-h-9 items-center border border-ink bg-ink px-4 text-sm font-bold text-white">
+                        <span className="mt-4 inline-flex min-h-9 items-center border border-[var(--solid)] bg-[var(--solid)] px-4 text-sm font-bold text-[var(--solid-text)]">
                           Select
                         </span>
                       </span>
@@ -524,7 +558,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {availableSizes.map((option) => (
                     <OptionButton
-                      active={selectedSize.id === option.id}
+                      active={sizeId === option.id}
                       key={option.id}
                       label={option.label}
                       onClick={() => setSizeId(option.id)}
@@ -538,7 +572,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {availablePapers.map((option) => (
                     <OptionButton
-                      active={selectedPaper.id === option.id}
+                      active={paperId === option.id}
                       key={option.id}
                       label={option.label}
                       meta={option.add ? `+ ${currency(option.add)} each` : "Included"}
@@ -553,7 +587,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {finishingOptions.map((option) => (
                     <OptionButton
-                      active={selectedFinishing.id === option.id}
+                      active={finishingId === option.id}
                       key={option.id}
                       label={option.label}
                       meta={option.add ? `+ ${currency(option.add)} each` : "Included"}
@@ -581,7 +615,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                     </p>
                   </div>
                   <div className="flex items-center rounded-full border border-black/10 bg-white p-1">
-                    <button className="h-10 w-10 rounded-full bg-mist text-lg" onClick={() => setQuantity((value) => Math.max(product.minQuantity, value - 1))} type="button">-</button>
+                    <button className="h-10 w-10 rounded-full bg-mist text-lg" onClick={() => setQuantity((value) => clampQuantity((typeof value === "number" ? value : product.minQuantity) - 1, product))} type="button">-</button>
                     <input
                       className="h-10 w-24 bg-transparent text-center text-sm font-semibold outline-none"
                       min={product.minQuantity}
@@ -590,7 +624,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                       type="number"
                       value={quantity}
                     />
-                    <button className="h-10 w-10 rounded-full bg-ink text-lg text-white" onClick={() => setQuantity((value) => clampQuantity(value + 1, product))} type="button">+</button>
+                    <button className="h-10 w-10 rounded-full bg-[var(--solid)] text-lg text-[var(--solid-text)]" onClick={() => setQuantity((value) => clampQuantity((typeof value === "number" ? value : product.minQuantity) + 1, product))} type="button">+</button>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -746,7 +780,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 <div>
                   <h3 className="text-lg font-semibold text-ink">WhatsApp contact</h3>
                   <p className="mt-2 text-sm leading-6 text-graphite">Scan the QR or open WhatsApp to continue with file checks, delivery updates, and production confirmation.</p>
-                  <a className="mt-4 inline-flex min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-white" href={receipt.whatsappLink} rel="noreferrer" target="_blank">
+                  <a className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--solid)] px-5 text-sm font-medium text-[var(--solid-text)]" href={receipt.whatsappLink} rel="noreferrer" target="_blank">
                     Open WhatsApp
                   </a>
                 </div>
@@ -804,7 +838,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 </button>
                 {step < 4 ? (
                   <button
-                    className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white"
+                    className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--solid)] px-5 text-sm font-medium text-[var(--solid-text)]"
                     disabled={!canContinue}
                     onClick={() => setStep((value) => Math.min(4, value + 1))}
                     type="button"
@@ -813,7 +847,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                   </button>
                 ) : (
                   <button
-                    className="min-h-12 flex-1 rounded-full bg-ink px-5 text-sm font-medium text-white disabled:bg-neutral-400"
+                    className="min-h-12 flex-1 rounded-full bg-[var(--solid)] px-5 text-sm font-medium text-[var(--solid-text)] disabled:bg-neutral-400"
                     disabled={!canPlaceOrder}
                     onClick={placeOrder}
                     type="button"

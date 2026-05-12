@@ -218,7 +218,7 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
           </>
         )}
         <div className="flex flex-col gap-3 lg:col-span-3 sm:flex-row">
-          <button className="min-h-11 flex-1 bg-ink px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-neutral-400" disabled={isSaving} type="submit">
+          <button className="min-h-11 flex-1 bg-[var(--solid)] px-5 text-sm font-bold text-[var(--solid-text)] disabled:cursor-not-allowed disabled:bg-neutral-400" disabled={isSaving} type="submit">
             {editingServiceId ? `Update ${type === "services" ? "service" : "material"}` : `Add ${type === "services" ? "services" : "material"}`}
           </button>
           {editingServiceId ? (

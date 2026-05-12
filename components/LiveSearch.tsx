@@ -52,7 +52,7 @@ export function LiveSearch({ suggestions, initialQuery = "" }: LiveSearchProps) 
             type="search"
             value={query}
           />
-          <button className="hidden rounded-full bg-ink px-5 py-3 text-sm font-medium text-white transition hover:bg-black sm:inline-flex" type="submit">
+          <button className="hidden rounded-full bg-[var(--solid)] px-5 py-3 text-sm font-medium text-[var(--solid-text)] transition hover:opacity-90 sm:inline-flex" type="submit">
             Search
           </button>
         </div>

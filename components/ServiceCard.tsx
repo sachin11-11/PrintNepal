@@ -27,7 +27,7 @@ export function ServiceCard({ service }: { service: Service }) {
         </div>
         <div className="mt-8 flex items-center justify-between border-t border-black/10 pt-4 text-sm">
           <span className="text-graphite">{service.price}</span>
-          <span className="border border-black/10 p-2 text-graphite transition group-hover:bg-ink group-hover:text-white">
+          <span className="border border-black/10 p-2 text-graphite transition group-hover:bg-[var(--solid)] group-hover:text-[var(--solid-text)]">
             <ArrowIcon />
           </span>
         </div>

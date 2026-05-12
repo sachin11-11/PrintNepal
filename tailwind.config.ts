@@ -8,14 +8,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#121212",
-        mist: "#f3f5f4",
-        paper: "#f8f7f2",
-        graphite: "#5a5f5d",
-        press: "#d83a2e",
-        cyan: "#0d8ea0",
-        brass: "#b98416",
-        steel: "#24323a"
+        ink: "rgb(var(--ink-rgb) / <alpha-value>)",
+        mist: "rgb(var(--mist-rgb) / <alpha-value>)",
+        paper: "rgb(var(--paper-rgb) / <alpha-value>)",
+        graphite: "rgb(var(--graphite-rgb) / <alpha-value>)",
+        press: "rgb(var(--press-rgb) / <alpha-value>)",
+        cyan: "rgb(var(--cyan-rgb) / <alpha-value>)",
+        brass: "rgb(var(--brass-rgb) / <alpha-value>)",
+        steel: "rgb(var(--steel-rgb) / <alpha-value>)"
       },
       boxShadow: {
         soft: "8px 8px 0 rgba(18, 18, 18, 0.10)",

@@ -1,6 +1,6 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { OrderForm } from "@/components/OrderForm";
+import { HeroPrintSearch } from "@/components/HeroPrintSearch";
 import { categoryImages, printCatalog } from "@/lib/print-order-catalog";
 
 export default function Home() {
@@ -17,26 +17,34 @@ export default function Home() {
     <main className="min-h-screen overflow-hidden bg-paper">
       <Header />
 
-      <section className="print-band">
-        <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
-          <div className="grid gap-3 border-l-4 border-press bg-white/70 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <p className="eyebrow">Production starts here</p>
-              <h1 className="mt-2 max-w-4xl text-3xl font-black leading-tight text-ink sm:text-5xl">
-                Choose a print item, configure specs, upload artwork, and place the order.
-              </h1>
-            </div>
-            <div className="grid grid-cols-3 border border-ink/10 bg-white text-center text-xs font-bold uppercase tracking-[0.14em] text-graphite">
-              <span className="border-r border-ink/10 px-3 py-3">50+ items</span>
-              <span className="border-r border-ink/10 px-3 py-3">MOQ aware</span>
-              <span className="px-3 py-3">Wallet ready</span>
+      <section className="hero-print-stage relative isolate overflow-hidden bg-[var(--solid)] text-white">
+        <div className="hero-print-backdrop absolute inset-0 -z-20" />
+        <div className="hero-print-scrim absolute inset-0 -z-10" />
+        <div className="hero-press-strip hero-press-strip-one" aria-hidden="true" />
+        <div className="hero-press-strip hero-press-strip-two" aria-hidden="true" />
+        <div className="hero-press-strip hero-press-strip-three" aria-hidden="true" />
+
+        <div className="mx-auto grid min-h-[calc(100svh-9.5rem)] max-w-7xl content-center gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(20rem,0.88fr)_minmax(32rem,1.12fr)] lg:items-center lg:px-10">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-press">Kathmandu print studio</p>
+            <h1 className="mt-4 text-5xl font-black leading-[0.92] text-white sm:text-7xl lg:text-8xl">
+              PrintNepal
+            </h1>
+            <p className="mt-5 max-w-xl text-lg font-medium leading-8 text-white/80">
+              Premium cards, stickers, documents, packaging, signage, and event prints with instant product selection.
+            </p>
+            <div className="mt-7 grid max-w-xl grid-cols-3 border border-white/22 bg-black/20 text-center backdrop-blur-md">
+              <span className="border-r border-white/18 px-3 py-4 text-xs font-black uppercase tracking-[0.14em] text-white">50+ items</span>
+              <span className="border-r border-white/18 px-3 py-4 text-xs font-black uppercase tracking-[0.14em] text-white">Fast quote</span>
+              <span className="px-3 py-4 text-xs font-black uppercase tracking-[0.14em] text-white">Wallet ready</span>
             </div>
           </div>
-          <OrderForm />
+
+          <HeroPrintSearch />
         </div>
       </section>
 
-      <section className="bg-white" id="catalogue">
+      <section className="bg-paper" id="catalogue">
         <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10">
           <div className="mb-10 grid gap-5 border-b border-ink/10 pb-6 lg:grid-cols-[1fr_22rem] lg:items-end">
             <div>
@@ -53,7 +61,7 @@ export default function Home() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {catalogGroups.map((group) => (
-              <article key={group.category} className="group overflow-hidden border border-ink/10 bg-white transition hover:-translate-x-1 hover:-translate-y-1 hover:shadow-lift">
+              <article key={group.category} className="group overflow-hidden border border-ink/10 bg-[var(--surface)] transition hover:-translate-x-1 hover:-translate-y-1 hover:shadow-lift">
                 <div
                   className="aspect-[16/9] border-b border-ink/10 bg-mist bg-cover bg-center transition duration-500 group-hover:scale-[1.02]"
                   style={{ backgroundImage: `url(${categoryImages[group.category]})` }}

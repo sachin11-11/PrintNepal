@@ -113,7 +113,7 @@ export function AdminProductDesignManager() {
           </div>
         ) : null}
         <textarea className="min-h-28 border border-ink/15 p-4 lg:col-span-3" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} placeholder="Design details, materials, color choices" value={form.description} />
-        <button className="min-h-11 bg-ink px-5 text-sm font-bold text-white disabled:bg-neutral-400 lg:col-span-3" disabled={isSaving} type="submit">
+        <button className="min-h-11 bg-[var(--solid)] px-5 text-sm font-bold text-[var(--solid-text)] disabled:bg-neutral-400 lg:col-span-3" disabled={isSaving} type="submit">
           {editingId ? "Update design" : "Add design"}
         </button>
       </form>

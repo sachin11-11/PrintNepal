@@ -16,6 +16,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const savedTheme = localStorage.getItem("printnepal-theme");
+                const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "light";
+                document.documentElement.dataset.theme = savedTheme === "night" || savedTheme === "light" ? savedTheme : preferredTheme;
+              } catch {}
+            `
+          }}
+        />
+      </head>
       <body>
         {children}
         <Toast />

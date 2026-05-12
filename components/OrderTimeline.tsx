@@ -28,7 +28,7 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
 
         return (
           <li key={step} className="flex items-center gap-3 sm:block">
-            <span className={`flex h-9 w-9 items-center justify-center border text-xs font-bold ${isDone ? "border-ink bg-ink text-white" : "border-black/10 bg-white text-graphite"}`}>
+            <span className={`flex h-9 w-9 items-center justify-center border text-xs font-bold ${isDone ? "border-[var(--solid)] bg-[var(--solid)] text-[var(--solid-text)]" : "border-black/10 bg-white text-graphite"}`}>
               {index + 1}
             </span>
             <span className={`text-sm font-medium sm:mt-3 sm:block ${isDone ? "text-ink" : "text-graphite"}`}>

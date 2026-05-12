@@ -144,7 +144,7 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
           )}
           <p className="mt-2">Estimated print completion: {completionMinutes} min</p>
         </div>
-        <button className="relative z-20 min-h-12 rounded-full bg-ink px-6 text-sm font-medium text-white disabled:bg-neutral-400" disabled={isSubmitting || !isEditorReady} type="submit">
+        <button className="relative z-20 min-h-12 rounded-full bg-[var(--solid)] px-6 text-sm font-medium text-[var(--solid-text)] disabled:bg-neutral-400" disabled={isSubmitting || !isEditorReady} type="submit">
           {isSubmitting ? "Sending..." : isEditorReady ? "Send" : "Loading editor..."}
         </button>
       </form>
