@@ -29,6 +29,8 @@ export type TemplateCanvasObject = {
   fontStyle?: string;
   textAlign?: "left" | "center" | "right";
   letterSpacing?: number;
+  shapeKind?: string;
+  path?: string;
   angle?: number;
   rotation?: number;
   clipShape?: "ellipse" | "rect";
