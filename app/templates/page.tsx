@@ -16,7 +16,7 @@ export default function TemplatesPage() {
             Editable production templates.
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-graphite">
-            Pick a ready layout, customize the artwork, then continue into the same print ordering workflow.
+            Preview a layout, then edit its required fields, logos, and artwork before continuing into ordering.
           </p>
         </div>
         <div className="mt-10">
