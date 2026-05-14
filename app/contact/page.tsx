@@ -86,7 +86,7 @@ export default function ContactPage() {
 
       <section className="print-band">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,0.7fr)] lg:px-10">
-          <div className="border-l-4 border-press bg-[var(--surface)]/85 p-5">
+          <div className="atelier-hero p-5 sm:p-7">
             <p className="eyebrow">Contact us</p>
             <h1 className="mt-4 text-4xl font-black leading-tight text-ink sm:text-6xl">Talk to PrintNepal.</h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-graphite">
@@ -94,21 +94,21 @@ export default function ContactPage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a className="link-block" href="tel:+9779748808237">Call now</a>
-              <a className="link-block border-press bg-press" href="https://wa.me/9779748808237" rel="noreferrer" target="_blank">WhatsApp</a>
+              <a className="link-block" href="https://wa.me/9779748808237" rel="noreferrer" target="_blank">WhatsApp</a>
             </div>
           </div>
 
           <div className="grid gap-3">
             {contactMethods.map((method) => (
               <a
-                className="group grid gap-3 border border-ink/10 bg-[var(--surface)] p-4 transition hover:-translate-x-1 hover:-translate-y-1 hover:shadow-lift"
+                className="atelier-card group grid gap-3 p-4 transition hover:-translate-y-1"
                 href={method.href}
                 key={method.label}
                 rel={method.href.startsWith("http") ? "noreferrer" : undefined}
                 target={method.href.startsWith("http") ? "_blank" : undefined}
               >
                 <span className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center border border-ink/10 bg-mist text-press">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-mist text-press">
                     <ContactIcon name={method.icon} />
                   </span>
                   <span>
@@ -124,27 +124,27 @@ export default function ContactPage() {
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(24rem,0.65fr)] lg:px-10">
-        <div className="border border-ink/10 bg-[var(--surface)] p-5 shadow-soft sm:p-6">
+        <div className="atelier-card p-5 sm:p-6">
           <p className="eyebrow">Send a message</p>
           <h2 className="mt-3 text-3xl font-black text-ink">Tell us what you need printed.</h2>
           <form className="mt-6 grid gap-4" action="mailto:hello@printnepal.com" method="post" encType="text/plain">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-bold text-ink">
                 Name
-                <input className="min-h-12 border border-ink/10 bg-paper px-4 text-sm outline-none focus:border-press" name="name" placeholder="Your name" required />
+                <input className="atelier-input min-h-12 px-4 text-sm outline-none" name="name" placeholder="Your name" required />
               </label>
               <label className="grid gap-2 text-sm font-bold text-ink">
                 Phone
-                <input className="min-h-12 border border-ink/10 bg-paper px-4 text-sm outline-none focus:border-press" name="phone" placeholder="+977" required />
+                <input className="atelier-input min-h-12 px-4 text-sm outline-none" name="phone" placeholder="+977" required />
               </label>
             </div>
             <label className="grid gap-2 text-sm font-bold text-ink">
               Email
-              <input className="min-h-12 border border-ink/10 bg-paper px-4 text-sm outline-none focus:border-press" name="email" placeholder="you@example.com" type="email" />
+              <input className="atelier-input min-h-12 px-4 text-sm outline-none" name="email" placeholder="you@example.com" type="email" />
             </label>
             <label className="grid gap-2 text-sm font-bold text-ink">
               Topic
-              <select className="min-h-12 border border-ink/10 bg-paper px-4 text-sm outline-none focus:border-press" name="topic">
+              <select className="atelier-input min-h-12 px-4 text-sm outline-none" name="topic">
                 {supportTopics.map((topic) => (
                   <option key={topic}>{topic}</option>
                 ))}
@@ -152,20 +152,20 @@ export default function ContactPage() {
             </label>
             <label className="grid gap-2 text-sm font-bold text-ink">
               Message
-              <textarea className="min-h-36 border border-ink/10 bg-paper p-4 text-sm outline-none focus:border-press" name="message" placeholder="Product, quantity, size, deadline, delivery location, or artwork notes" required />
+              <textarea className="atelier-input min-h-36 p-4 text-sm outline-none" name="message" placeholder="Product, quantity, size, deadline, delivery location, or artwork notes" required />
             </label>
             <button className="link-block w-fit" type="submit">Send message</button>
           </form>
         </div>
 
         <div className="grid gap-6">
-          <div className="border border-ink/10 bg-[var(--surface)] p-5">
+          <div className="atelier-card p-5">
             <p className="eyebrow">Social media</p>
             <h2 className="mt-3 text-3xl font-black text-ink">Follow and message us.</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {socialLinks.map((social) => (
                 <a
-                  className="group flex items-center justify-between gap-4 border border-ink/10 bg-paper p-3 transition hover:-translate-x-1 hover:-translate-y-1 hover:shadow-soft"
+                  className="group flex items-center justify-between gap-4 rounded-lg bg-paper p-3 transition hover:-translate-y-1 hover:shadow-soft"
                   href={social.href}
                   key={social.label}
                   rel="noreferrer"
@@ -186,8 +186,8 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <div className="border border-ink/10 bg-mist p-5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-press">Production note</p>
+          <div className="rounded-lg bg-mist p-5 shadow-soft">
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-press">Production note</p>
             <p className="mt-3 text-sm leading-6 text-graphite">
               For accurate quotes, include product type, quantity, size, paper/material, finishing, deadline, and delivery location.
             </p>

@@ -88,21 +88,21 @@ export function AdminOrdersManager() {
           <p className="mt-3 text-sm text-graphite">{isLoading ? "Loading orders..." : `${total} orders`}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <select className="min-h-11 border border-ink/10 bg-white px-4 text-sm font-semibold text-ink" onChange={(event) => {
+          <select className="atelier-input min-h-11 px-4 text-sm font-semibold text-ink" onChange={(event) => {
             setStatus(event.target.value);
             loadOrders(event.target.value, paymentStatus, serviceId);
           }} value={status}>
             <option value="all">All statuses</option>
             {orderStatuses.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <select className="min-h-11 border border-ink/10 bg-white px-4 text-sm font-semibold text-ink" onChange={(event) => {
+          <select className="atelier-input min-h-11 px-4 text-sm font-semibold text-ink" onChange={(event) => {
             setPaymentStatus(event.target.value);
             loadOrders(status, event.target.value, serviceId);
           }} value={paymentStatus}>
             <option value="all">All payments</option>
             {paymentStatuses.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <select className="min-h-11 border border-ink/10 bg-white px-4 text-sm font-semibold text-ink" onChange={(event) => {
+          <select className="atelier-input min-h-11 px-4 text-sm font-semibold text-ink" onChange={(event) => {
             setServiceId(event.target.value);
             loadOrders(status, paymentStatus, event.target.value);
           }} value={serviceId}>
@@ -113,12 +113,12 @@ export function AdminOrdersManager() {
       </div>
       {error ? <p className="mt-8 border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
       {!error && !isLoading && orders.length === 0 ? (
-        <p className="mt-8 border border-black/10 bg-white p-5 text-sm text-graphite">No orders found.</p>
+        <p className="atelier-card mt-8 p-5 text-sm text-graphite">No orders found.</p>
       ) : null}
       {orders.length > 0 ? (
-        <div className="mt-8 overflow-x-auto border border-ink/10 bg-white shadow-sm">
+        <div className="atelier-card mt-8 overflow-x-auto">
           <table className="w-full min-w-[1320px] text-left text-sm">
-            <thead className="bg-mist text-xs uppercase tracking-[0.16em] text-graphite">
+            <thead className="bg-mist text-xs uppercase tracking-[0.08em] text-graphite">
               <tr>
                 <th className="px-5 py-4">Order</th>
                 <th className="px-5 py-4">Customer</th>
@@ -132,9 +132,9 @@ export function AdminOrdersManager() {
                 <th className="px-5 py-4">WhatsApp</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/10">
+            <tbody>
               {orders.map((order) => (
-                <tr key={order.id}>
+                <tr className="transition hover:bg-mist/70" key={order.id}>
                   <td className="px-5 py-4 font-mono text-xs text-ink">{order.id}</td>
                   <td className="px-5 py-4 text-graphite">{order.customer_name}<br />{order.email}</td>
                   <td className="px-5 py-4 text-graphite">{order.services?.title ?? order.service_id}</td>

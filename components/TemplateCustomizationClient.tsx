@@ -1,20 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { TemplateEditorHandle, TemplateEditorValue } from "./TemplateEditor";
+import { TemplateEditor, type TemplateEditorHandle, type TemplateEditorValue } from "./TemplateEditor";
 import type { ProductTemplateWithService } from "@/lib/supabase/queries";
 import { estimateCompletionMinutes, estimateDeliveryMinutes, haversineDistanceKm } from "@/lib/location/distance";
-
-const PolotnoTemplateEditor = dynamic(() => import("./PolotnoTemplateEditor"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex min-h-[46rem] items-center justify-center rounded-xl border border-black/10 bg-white text-sm text-graphite shadow-sm">
-      Loading design editor...
-    </div>
-  )
-});
 
 type FieldConfig = string;
 
@@ -23,14 +13,34 @@ function labelForField(field: string) {
 }
 
 function isImageField(field: string) {
-  return ["photo", "logo"].includes(field);
+  return ["photo", "logo"].includes(field) || field.endsWith("_image") || field.includes("image");
+}
+
+function getTemplateLayers(template: TemplateEditorValue) {
+  const layers = "layers" in template && Array.isArray(template.layers) ? template.layers : [];
+  const objects = "objects" in template && Array.isArray(template.objects) ? template.objects : [];
+  return [...layers, ...objects];
+}
+
+function getInitialFieldValues(template: TemplateEditorValue, fields: string[]) {
+  const values: Record<string, string> = {};
+  const layers = getTemplateLayers(template);
+
+  for (const field of fields) {
+    if (isImageField(field)) continue;
+    const matchingLayer = layers.find((layer) => (layer.field ?? (layer.editable ? layer.id : null)) === field && typeof layer.text === "string");
+    values[field] = typeof matchingLayer?.text === "string" ? matchingLayer.text : "";
+  }
+
+  return values;
 }
 
 export function TemplateCustomizationClient({ template }: { template: ProductTemplateWithService }) {
   const router = useRouter();
   const editorRef = useRef<TemplateEditorHandle | null>(null);
   const fields = useMemo(() => (Array.isArray(template.editable_fields) ? template.editable_fields as FieldConfig[] : []), [template.editable_fields]);
-  const [isEditorReady, setIsEditorReady] = useState(false);
+  const textFields = useMemo(() => fields.filter((field) => !isImageField(field)), [fields]);
+  const [fieldValues, setFieldValues] = useState(() => getInitialFieldValues(template.template_json as TemplateEditorValue, fields));
   const [customer, setCustomer] = useState({
     customer_name: "PrintNepal Customer",
     email: "customer@printnepal.com",
@@ -58,6 +68,11 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
         lng: position.coords.longitude
       });
     });
+  }
+
+  function updateTemplateText(field: string, value: string) {
+    setFieldValues((current) => ({ ...current, [field]: value }));
+    editorRef.current?.updateField(field, value);
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -95,16 +110,17 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
   }
 
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <PolotnoTemplateEditor
-        editorHandleRef={editorRef}
-        onReady={() => setIsEditorReady(true)}
+    <div className="grid gap-6">
+      <TemplateEditor
+        ref={editorRef}
+        category={template.category}
+        fields={fields}
         template={template.template_json as TemplateEditorValue}
       />
-      <form className="sticky top-4 z-20 grid gap-4 rounded-[2rem] border border-black/10 bg-white p-5 shadow-soft" onSubmit={submitOrder}>
-        <div>
+      <form className="grid gap-5 border border-black/10 bg-white p-5 xl:grid-cols-[18rem_minmax(0,1fr)_minmax(18rem,24rem)_14rem]" onSubmit={submitOrder}>
+        <div className="border-r border-black/10 pr-5">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">{template.category}</p>
-          <h1 className="mt-3 font-serif text-4xl text-ink">{template.title}</h1>
+          <h1 className="mt-3 font-serif text-3xl text-ink">{template.title}</h1>
         </div>
         <input type="hidden" name="customer_name" value={customer.customer_name} readOnly />
         <input type="hidden" name="email" value={customer.email} readOnly />
@@ -116,12 +132,46 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
         <input type="hidden" name="design_method" value="uploaded" readOnly />
 
         <div className="grid gap-3">
+          {textFields.length > 0 ? (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-graphite">Quick text edits</p>
+            {textFields.map((field) => {
+              const value = fieldValues[field] ?? "";
+              const useTextarea = value.length > 44 || value.includes("\n") || ["body", "details", "subheadline"].some((token) => field.includes(token));
+
+              return (
+                <label key={field} className="grid gap-2 text-sm font-medium text-ink">
+                  {labelForField(field)}
+                  {useTextarea ? (
+                    <textarea
+                      className="min-h-24 border border-black/15 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-black"
+                      onChange={(event) => updateTemplateText(field, event.target.value)}
+                      value={value}
+                    />
+                  ) : (
+                    <input
+                      className="min-h-10 border border-black/15 bg-white px-3 text-sm text-ink outline-none transition focus:border-black"
+                      onChange={(event) => updateTemplateText(field, event.target.value)}
+                      type="text"
+                      value={value}
+                    />
+                  )}
+                </label>
+              );
+            })}
+          </>
+        ) : (
+          <p className="text-sm text-graphite">Select text directly on the artboard to edit it.</p>
+        )}
+          </div>
+
+        <div className="grid gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-graphite">Photo / logo uploads</p>
-          {fields.filter(isImageField).map((field) => (
+          {fields.filter(isImageField).length > 0 ? fields.filter(isImageField).map((field) => (
             <label key={field} className="grid gap-2 text-sm font-medium text-ink">
               {labelForField(field)}
               <input
-                className="rounded-full border border-dashed border-black/20 bg-mist px-4 py-3 text-sm text-graphite"
+                className="border border-dashed border-black/20 bg-mist px-4 py-3 text-sm text-graphite"
                 accept="image/*"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
@@ -132,21 +182,25 @@ export function TemplateCustomizationClient({ template }: { template: ProductTem
                 type="file"
               />
             </label>
-          ))}
+          )) : (
+            <p className="text-sm text-graphite">This template has no image upload slot.</p>
+          )}
         </div>
-        <div className="rounded-3xl border border-black/10 bg-mist p-4 text-sm text-graphite">
+        <div className="grid content-start gap-4 text-sm text-graphite">
+        <div className="border border-black/10 bg-mist p-4">
           <p className="font-medium text-ink">Delivery estimate</p>
           <p className="mt-2">Shop: {process.env.NEXT_PUBLIC_SHOP_ADDRESS ?? "Configure NEXT_PUBLIC_SHOP_ADDRESS"}</p>
           {distanceKm === null ? (
-            <button className="mt-3 rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-ink" onClick={useMyLocation} type="button">Use my location</button>
+            <button className="mt-3 border border-black/10 bg-white px-4 py-2 text-sm text-ink" onClick={useMyLocation} type="button">Use my location</button>
           ) : (
             <p className="mt-2">Distance: {distanceKm.toFixed(2)} km · Delivery: {deliveryMinutes} min</p>
           )}
           <p className="mt-2">Estimated print completion: {completionMinutes} min</p>
         </div>
-        <button className="relative z-20 min-h-12 rounded-full bg-[var(--solid)] px-6 text-sm font-medium text-[var(--solid-text)] disabled:bg-neutral-400" disabled={isSubmitting || !isEditorReady} type="submit">
-          {isSubmitting ? "Sending..." : isEditorReady ? "Send" : "Loading editor..."}
+        <button className="relative z-20 min-h-12 bg-[var(--solid)] px-6 text-sm font-medium text-[var(--solid-text)] disabled:bg-neutral-400" disabled={isSubmitting} type="submit">
+          {isSubmitting ? "Sending..." : "Send"}
         </button>
+        </div>
       </form>
     </div>
   );

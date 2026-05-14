@@ -1,9 +1,9 @@
 export function Footer() {
   return (
-    <footer className="border-t border-ink/20 bg-[var(--solid)] text-[var(--solid-text)]">
+    <footer className="bg-[var(--solid)] text-[var(--solid-text)]">
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm sm:px-8 md:grid-cols-[1fr_auto] lg:px-10">
         <div>
-          <p className="font-black tracking-[0.28em] opacity-100">PRINTNEPAL</p>
+          <p className="font-black tracking-[0.14em] opacity-100">PRINTNEPAL</p>
           <p className="mt-3 max-w-md leading-6 opacity-75">
             Printing press ordering for stationery, marketing materials, packaging, signage, cards, stickers, and bulk production across Nepal.
           </p>
@@ -22,8 +22,8 @@ export function Footer() {
           <a className="hover:opacity-100" href="/contact">Contact</a>
           <a className="hover:opacity-100" href="/admin/login">Admin</a>
           </div>
-          <div className="footer-help-box px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-100">Order help</p>
+          <div className="footer-help-box rounded-lg px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] opacity-100">Order help</p>
             <p className="mt-2 text-sm leading-6 opacity-75">Mail us for production questions, file checks, delivery coordination, or admin setup.</p>
           </div>
         </div>

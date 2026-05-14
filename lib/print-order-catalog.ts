@@ -35,16 +35,16 @@ export const categoryImages: Record<string, string> = {
 };
 
 export const sizeOptions: CatalogOption[] = [
-  { id: "a6", label: "A6", multiplier: 0.6 },
-  { id: "a5", label: "A5", multiplier: 0.8 },
-  { id: "a4", label: "A4", multiplier: 1 },
-  { id: "a3", label: "A3", multiplier: 1.85 },
-  { id: "a2", label: "A2", multiplier: 3.4 },
-  { id: "business-card", label: "Business card", multiplier: 0.42 },
-  { id: "id-card", label: "ID card", multiplier: 0.9 },
-  { id: "letterhead", label: "Letterhead", multiplier: 1 },
-  { id: "dl-envelope", label: "DL envelope", multiplier: 0.85 },
-  { id: "custom", label: "Custom size", multiplier: 1.25 }
+  { id: "a6", label: "105 x 148 mm (A6)", multiplier: 0.6 },
+  { id: "a5", label: "148 x 210 mm (A5)", multiplier: 0.8 },
+  { id: "a4", label: "210 x 297 mm (A4)", multiplier: 1 },
+  { id: "a3", label: "297 x 420 mm (A3)", multiplier: 1.85 },
+  { id: "a2", label: "420 x 594 mm (A2)", multiplier: 3.4 },
+  { id: "business-card", label: "90 x 50 mm (Business card)", multiplier: 0.42 },
+  { id: "id-card", label: "86 x 54 mm (ID card)", multiplier: 0.9 },
+  { id: "letterhead", label: "210 x 297 mm (Letterhead)", multiplier: 1 },
+  { id: "dl-envelope", label: "110 x 220 mm (DL envelope)", multiplier: 0.85 },
+  { id: "custom", label: "Custom dimensions", multiplier: 1.25 }
 ];
 
 export const paperOptions: CatalogOption[] = [
@@ -91,7 +91,7 @@ export const walletOptions = [
 ];
 
 export const printCatalog: PrintProduct[] = [
-  { id: "letter-head", name: "Letter Head", category: "Business Stationery", unit: "sheet", minQuantity: 100, basePrice: 9, turnaroundHours: 24, popular: true, sizes: ["letterhead", "a4", "custom"], paperTypes: ["80gsm", "100gsm", "130gsm"] },
+  { id: "letter-head", name: "Letterhead", category: "Business Stationery", unit: "sheet", minQuantity: 100, basePrice: 9, turnaroundHours: 24, popular: true, sizes: ["letterhead", "a4", "custom"], paperTypes: ["80gsm", "100gsm", "130gsm"] },
   { id: "business-card", name: "Business Card", category: "Business Stationery", unit: "card", minQuantity: 100, basePrice: 6, turnaroundHours: 24, popular: true, sizes: ["business-card", "custom"], paperTypes: ["300gsm", "350gsm", "linen", "pearl"] },
   { id: "envelope", name: "Envelope", category: "Business Stationery", unit: "piece", minQuantity: 100, basePrice: 12, turnaroundHours: 36, sizes: ["dl-envelope", "custom"], paperTypes: ["80gsm", "100gsm", "kraft"] },
   { id: "invoice-pad", name: "Invoice Pad", category: "Business Stationery", unit: "pad", minQuantity: 10, basePrice: 160, turnaroundHours: 48, sizes: ["a5", "a4", "custom"], paperTypes: ["80gsm", "100gsm"] },
@@ -100,7 +100,7 @@ export const printCatalog: PrintProduct[] = [
   { id: "notepad", name: "Notepad", category: "Business Stationery", unit: "pad", minQuantity: 25, basePrice: 120, turnaroundHours: 48, sizes: ["a6", "a5", "a4"], paperTypes: ["80gsm", "100gsm"] },
   { id: "company-profile", name: "Company Profile", category: "Documents", unit: "copy", minQuantity: 10, basePrice: 220, turnaroundHours: 72, sizes: ["a4", "custom"], paperTypes: ["130gsm", "170gsm", "250gsm"] },
   { id: "brochure", name: "Brochure", category: "Marketing", unit: "piece", minQuantity: 100, basePrice: 18, turnaroundHours: 48, popular: true, sizes: ["a5", "a4", "custom"], paperTypes: ["130gsm", "170gsm", "250gsm"] },
-  { id: "flyer", name: "Flyer", category: "Marketing", unit: "piece", minQuantity: 100, basePrice: 8, turnaroundHours: 24, popular: true, sizes: ["a6", "a5", "a4"], paperTypes: ["100gsm", "130gsm", "170gsm"] },
+  { id: "flyer", name: "Pamphlet / Flyer", category: "Marketing", unit: "piece", minQuantity: 100, basePrice: 8, turnaroundHours: 24, popular: true, sizes: ["a6", "a5", "a4"], paperTypes: ["100gsm", "130gsm", "170gsm"] },
   { id: "poster", name: "Poster", category: "Marketing", unit: "piece", minQuantity: 10, basePrice: 95, turnaroundHours: 24, sizes: ["a3", "a2", "custom"], paperTypes: ["130gsm", "170gsm", "250gsm"] },
   { id: "banner", name: "Flex Banner", category: "Signage", unit: "sq ft", minQuantity: 10, basePrice: 65, turnaroundHours: 24, sizes: ["custom"], paperTypes: ["sticker-gloss"] },
   { id: "standee", name: "Rollup Standee", category: "Signage", unit: "piece", minQuantity: 1, basePrice: 2200, turnaroundHours: 48, sizes: ["custom"], paperTypes: ["sticker-gloss"] },

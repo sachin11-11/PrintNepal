@@ -6,6 +6,7 @@ import { BUSINESS_CARD_1, BUSINESS_CARD_2, BUSINESS_CARD_3 } from "./business-ca
 import { BIRTHDAY_CARD_1, BIRTHDAY_CARD_2, BIRTHDAY_CARD_3 } from "./birthday-card-variants";
 import { LAPTOP_SKIN_1, LAPTOP_SKIN_2, LAPTOP_SKIN_3 } from "./laptop-skin-variants";
 import { STICKER_1, STICKER_2, STICKER_3 } from "./sticker-variants";
+import { PRINT_ARTICLE_TEMPLATES } from "./print-article-templates";
 import type { ProductTemplateWithService } from "@/lib/supabase/queries";
 
 export const LOCAL_TEMPLATE_CATALOG: ProductTemplateWithService[] = [
@@ -27,7 +28,8 @@ export const LOCAL_TEMPLATE_CATALOG: ProductTemplateWithService[] = [
   LAPTOP_SKIN_3,
   STICKER_1,
   STICKER_2,
-  STICKER_3
+  STICKER_3,
+  ...PRINT_ARTICLE_TEMPLATES
 ];
 
 const categoryAliases = {
@@ -37,7 +39,15 @@ const categoryAliases = {
   business: "business card visiting card professional card corporate card",
   birthday: "birthday card birthday invitation party invite celebration",
   sticker: "sticker label sticker badge decal vinyl",
-  "laptop-skin": "laptop skin laptop wrapper skin cover laptop sticker"
+  "laptop-skin": "laptop skin laptop wrapper skin cover laptop sticker",
+  brochure: "brochure tri fold company profile service leaflet marketing",
+  flyer: "flyer pamphlet leaflet handbill poster marketing event promotion",
+  poster: "poster wall poster event launch sale advertisement marketing",
+  certificate: "certificate award achievement training completion document",
+  letterhead: "letterhead company stationery official business paper",
+  booklet: "booklet catalog catalogue profile manual magazine document",
+  menu: "menu restaurant cafe food hospitality rate card",
+  postcard: "postcard promo card mailer marketing campaign"
 } as const;
 
 function normalizeSearchText(value: string) {
@@ -145,5 +155,6 @@ export {
   LAPTOP_SKIN_3,
   STICKER_1,
   STICKER_2,
-  STICKER_3
+  STICKER_3,
+  PRINT_ARTICLE_TEMPLATES
 };

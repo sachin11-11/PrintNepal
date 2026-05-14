@@ -4,40 +4,42 @@
 
 :root {
   color-scheme: light;
-  background: #f8f7f2;
-  color: #121212;
-  --ink: #121212;
-  --ink-rgb: 18 18 18;
-  --paper: #f8f7f2;
-  --paper-rgb: 248 247 242;
-  --mist: #f3f5f4;
-  --mist-rgb: 243 245 244;
-  --graphite: #5a5f5d;
-  --graphite-rgb: 90 95 93;
-  --press: #d83a2e;
-  --press-rgb: 216 58 46;
-  --cyan: #0d8ea0;
-  --cyan-rgb: 13 142 160;
+  background: #fbf9f4;
+  color: #1b1c19;
+  --ink: #1b1c19;
+  --ink-rgb: 27 28 25;
+  --paper: #fbf9f4;
+  --paper-rgb: 251 249 244;
+  --mist: #f5f2ea;
+  --mist-rgb: 245 242 234;
+  --graphite: #625c52;
+  --graphite-rgb: 98 92 82;
+  --press: #a43716;
+  --press-rgb: 164 55 22;
+  --cyan: #66745f;
+  --cyan-rgb: 102 116 95;
   --brass: #b98416;
   --brass-rgb: 185 132 22;
-  --steel: #24323a;
-  --steel-rgb: 36 50 58;
+  --steel: #263746;
+  --steel-rgb: 38 55 70;
   --surface: #ffffff;
-  --surface-muted: #f3f5f4;
-  --line: rgba(18, 18, 18, 0.12);
-  --solid: #121212;
+  --surface-muted: #eee7dc;
+  --line: rgba(120, 91, 70, 0.16);
+  --solid: #263746;
   --solid-text: #ffffff;
-  --action: #0d8ea0;
-  --action-rgb: 13 142 160;
-  --action-text: #f8fffb;
-  --action-soft: #dff7f4;
-  --selection: #d83a2e;
-  --hero-search-bg: rgba(18, 18, 18, 0.62);
-  --hero-search-border: rgba(255, 255, 255, 0.22);
+  --action: #a43716;
+  --action-rgb: 164 55 22;
+  --action-text: #fffaf4;
+  --action-soft: #f7ded2;
+  --selection: #c54f2c;
+  --primary-gradient: linear-gradient(135deg, #a43716 0%, #c54f2c 100%);
+  --sage-soft: #dce6d6;
+  --hero-search-bg: rgba(38, 55, 70, 0.76);
+  --hero-search-border: rgba(255, 255, 255, 0.18);
   --hero-search-text: #ffffff;
   --hero-search-muted: rgba(255, 255, 255, 0.72);
   --hero-search-field: rgba(255, 255, 255, 0.96);
-  --hero-search-shadow: rgba(0, 0, 0, 0.32);
+  --hero-search-shadow: rgba(27, 28, 25, 0.2);
 }
 
 [data-theme="night"] {
@@ -48,14 +50,14 @@
   --ink-rgb: 247 242 232;
   --paper: #0d1113;
   --paper-rgb: 13 17 19;
-  --mist: #182025;
-  --mist-rgb: 24 32 37;
-  --graphite: #b8c1bd;
-  --graphite-rgb: 184 193 189;
-  --press: #ff5a47;
-  --press-rgb: 255 90 71;
-  --cyan: #27c5d8;
-  --cyan-rgb: 39 197 216;
+  --mist: #181f21;
+  --mist-rgb: 24 31 33;
+  --graphite: #c7bcb0;
+  --graphite-rgb: 199 188 176;
+  --press: #ff8a62;
+  --press-rgb: 255 138 98;
+  --cyan: #9eb091;
+  --cyan-rgb: 158 176 145;
   --brass: #e1b24f;
   --brass-rgb: 225 178 79;
   --steel: #d4dde3;
@@ -65,11 +67,13 @@
   --line: rgba(255, 255, 255, 0.14);
   --solid: #050809;
   --solid-text: #ffffff;
-  --action: #31d0c7;
-  --action-rgb: 49 208 199;
-  --action-text: #061316;
-  --action-soft: #123437;
-  --selection: #ff6a4f;
+  --action: #ff8a62;
+  --action-rgb: 255 138 98;
+  --action-text: #1b100b;
+  --action-soft: #3a2118;
+  --selection: #ffae78;
+  --primary-gradient: linear-gradient(135deg, #ff8a62 0%, #ffae78 100%);
+  --sage-soft: #1f2c25;
   --hero-search-bg: rgba(10, 13, 15, 0.72);
   --hero-search-border: rgba(255, 255, 255, 0.24);
   --hero-search-text: #fff7ea;
@@ -80,7 +84,6 @@
 
 * {
   box-sizing: border-box;
-  border-radius: 0 !important;
 }
 
 html {
@@ -90,11 +93,10 @@ html {
 body {
   margin: 0;
   background:
-    linear-gradient(rgba(18, 18, 18, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 18, 18, 0.035) 1px, transparent 1px),
-    linear-gradient(180deg, #f8f7f2 0%, #ffffff 42%, #f2f5f4 100%);
+    radial-gradient(circle at 16% 8%, rgba(185, 132, 22, 0.1), transparent 28rem),
+    linear-gradient(180deg, #fbf9f4 0%, #ffffff 46%, #f5f2ea 100%);
   background-size: 32px 32px, 32px 32px, auto;
-  color: #121212;
+  color: #1b1c19;
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   transition: background-color 180ms ease, color 180ms ease;
@@ -139,22 +141,22 @@ a {
 
 .print-panel {
   border: 1px solid var(--line);
+  border-radius: 0.75rem;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
-  box-shadow: 8px 8px 0 rgba(18, 18, 18, 0.08);
+  box-shadow: 0 24px 60px rgba(27, 28, 25, 0.08);
 }
 
 .print-band {
-  border-block: 1px solid var(--line);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--selection) 12%, transparent), transparent 28%),
-    linear-gradient(270deg, color-mix(in srgb, var(--action) 12%, transparent), transparent 28%),
-    color-mix(in srgb, var(--surface) 72%, transparent);
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--selection) 14%, transparent), transparent 20rem),
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--cyan) 16%, transparent), transparent 24rem),
+    color-mix(in srgb, var(--mist) 82%, transparent);
 }
 
 .eyebrow {
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--press);
 }
@@ -163,7 +165,8 @@ a {
   min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--action);
+  border: 0;
+  border-radius: 0;
   background: var(--action);
   color: var(--action-text);
   padding-inline: 1.25rem;
@@ -173,8 +176,8 @@ a {
 }
 
 .link-block:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 rgba(18, 18, 18, 0.18);
+  transform: none;
+  box-shadow: none;
 }
 
 .footer-help-box {
@@ -183,10 +186,7 @@ a {
 }
 
 .order-flow-stage {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--action) 13%, transparent), transparent 38%),
-    linear-gradient(315deg, color-mix(in srgb, var(--selection) 12%, transparent), transparent 34%),
-    var(--paper);
+  background: var(--paper);
 }
 
 .order-progress-track {
@@ -199,8 +199,9 @@ a {
 
 .order-selected {
   border-color: var(--action);
-  background: var(--action);
-  color: var(--action-text);
+  background: var(--action-soft);
+  color: var(--ink);
+  box-shadow: none;
 }
 
 .order-cta {
@@ -228,16 +229,17 @@ a {
 
 .hero-print-scrim {
   background:
-    linear-gradient(90deg, rgba(18, 18, 18, 0.94) 0%, rgba(18, 18, 18, 0.74) 42%, rgba(18, 18, 18, 0.34) 100%),
-    linear-gradient(180deg, rgba(18, 18, 18, 0.1) 0%, rgba(18, 18, 18, 0.84) 100%);
+    linear-gradient(90deg, rgba(27, 28, 25, 0.92) 0%, rgba(38, 55, 70, 0.72) 46%, rgba(38, 55, 70, 0.28) 100%),
+    linear-gradient(180deg, rgba(27, 28, 25, 0.12) 0%, rgba(27, 28, 25, 0.78) 100%);
 }
 
 .hero-search-shell {
   position: relative;
   border: 1px solid var(--hero-search-border);
+  border-radius: 0.9rem;
   background: var(--hero-search-bg);
   padding: clamp(1.25rem, 3vw, 2rem);
-  box-shadow: 18px 18px 0 var(--hero-search-shadow), 0 28px 80px rgba(0, 0, 0, 0.34);
+  box-shadow: 0 28px 90px var(--hero-search-shadow);
   backdrop-filter: blur(18px);
 }
 
@@ -246,7 +248,7 @@ a {
   position: absolute;
   inset: -10px;
   z-index: -1;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1.1rem;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(18px);
 }
@@ -256,15 +258,70 @@ a {
 }
 
 .hero-search-field {
-  border-color: color-mix(in srgb, var(--press) 70%, var(--hero-search-field));
+  border-color: transparent;
+  border-radius: 0.7rem;
   background: var(--hero-search-field);
-  box-shadow: 8px 8px 0 color-mix(in srgb, var(--press) 45%, transparent);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
 }
 
 .hero-search-results {
   border-color: var(--hero-search-border);
+  border-radius: 0.75rem;
   background: color-mix(in srgb, #111 86%, transparent);
   backdrop-filter: blur(18px);
+}
+
+.atelier-hero {
+  border-radius: 0.9rem;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(var(--brass-rgb), 0.12), transparent 18rem),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: 0 22px 58px rgba(27, 28, 25, 0.07);
+}
+
+.atelier-card {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  box-shadow: 0 18px 42px rgba(27, 28, 25, 0.06);
+}
+
+.atelier-card:hover {
+  box-shadow: 0 24px 60px rgba(27, 28, 25, 0.1);
+}
+
+.atelier-chip {
+  border-radius: 999px;
+  background: var(--mist);
+  color: var(--graphite);
+}
+
+.atelier-input {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.atelier-input:focus,
+.atelier-input:focus-within {
+  border-color: color-mix(in srgb, var(--press) 54%, transparent);
+  box-shadow: none;
+}
+
+.order-step-pane {
+  animation: order-step-enter 220ms ease-out;
+}
+
+@keyframes order-step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-press-strip {

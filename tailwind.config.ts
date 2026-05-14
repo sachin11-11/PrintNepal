@@ -18,11 +18,12 @@ const config: Config = {
         steel: "rgb(var(--steel-rgb) / <alpha-value>)"
       },
       boxShadow: {
-        soft: "8px 8px 0 rgba(18, 18, 18, 0.10)",
-        lift: "12px 12px 0 rgba(18, 18, 18, 0.12)"
+        soft: "0 18px 42px rgba(27, 28, 25, 0.08)",
+        lift: "0 28px 68px rgba(27, 28, 25, 0.12)"
       },
       fontFamily: {
         sans: [
+          "Manrope",
           "Inter",
           "ui-sans-serif",
           "system-ui",

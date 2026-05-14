@@ -26,15 +26,15 @@ export function AdminDashboardClient() {
 
   return (
     <section>
-      <div className="border-l-4 border-press bg-white/80 p-5">
+      <div className="atelier-hero p-5 sm:p-7">
         <p className="eyebrow">Dashboard</p>
         <h1 className="mt-4 text-5xl font-black text-ink">Print operations.</h1>
       </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(([label, value]) => (
-          <article key={label} className="border border-ink/10 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-graphite">{label}</p>
-            <p className="mt-4 text-4xl font-black text-ink">{value}</p>
+          <article key={label} className="atelier-card p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.08em] text-graphite">{label}</p>
+            <p className="mt-4 text-5xl font-black text-press">{value}</p>
           </article>
         ))}
       </div>

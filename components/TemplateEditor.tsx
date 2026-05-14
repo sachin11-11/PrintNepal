@@ -25,7 +25,7 @@ function ToolButton({
   return (
     <button
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-md border border-black/10 bg-white text-sm font-semibold text-ink transition hover:border-black/25 hover:bg-mist"
+      className="flex h-9 w-9 items-center justify-center border border-black/10 bg-white text-sm font-semibold text-ink transition hover:border-black/25 hover:bg-mist"
       onClick={onClick}
       onMouseDown={(event) => event.preventDefault()}
       title={label}
@@ -58,7 +58,11 @@ function fieldLabel(field: string) {
 }
 
 function isImageField(field: string) {
-  return field === "photo" || field === "logo";
+  return field === "photo" || field === "logo" || field.endsWith("_image") || field.includes("image");
+}
+
+function layerField(layer: TemplateCanvasObject) {
+  return layer.field ?? (layer.editable ? layer.id ?? null : null);
 }
 
 function isLockedObject(object: TemplateCanvasObject) {
@@ -105,6 +109,7 @@ function exportLayer(layer: TemplateCanvasObject) {
   const base = {
     id: layer.id,
     name: layer.name,
+    field: layerField(layer),
     type: layer.type,
     visible: layer.visible,
     locked: layer.locked,
@@ -147,7 +152,7 @@ function MiniActionButton({ label, children, onClick }: { label: string; childre
   return (
     <button
       aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-white text-[13px] font-semibold text-ink transition hover:border-violet-300 hover:bg-violet-50"
+      className="flex h-8 w-8 items-center justify-center border border-black/10 bg-white text-[13px] font-semibold text-ink transition hover:border-violet-300 hover:bg-violet-50"
       onClick={onClick}
       title={label}
       type="button"
@@ -173,6 +178,8 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
   const [selectedFontFamily, setSelectedFontFamily] = useState("Inter");
   const [selectedText, setSelectedText] = useState("");
   const [selectedRadius, setSelectedRadius] = useState(0);
+  const [activePanel, setActivePanel] = useState<"design" | "text" | "uploads" | "elements" | "layers">("design");
+  const [zoom, setZoom] = useState(92);
 
   useEffect(() => {
     setLayers(normalizedLayers(template));
@@ -200,6 +207,10 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
     updateLayer(activeLayer.id ?? "", (layer) => ({ ...layer, ...properties }));
   }
 
+  function selectLayerById(id: string) {
+    setSelectedId(id);
+  }
+
   function selectLayer(layer: TemplateCanvasObject) {
     if (!layer.id) return;
     setSelectedId(layer.id);
@@ -211,16 +222,18 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
 
   function getRenderLayers() {
     const merged = layers.map((layer) => {
-      if (layer.field && Object.prototype.hasOwnProperty.call(values, layer.field) && typeof layer.text === "string") {
-        const nextText = values[layer.field];
+      const field = layerField(layer);
+
+      if (field && Object.prototype.hasOwnProperty.call(values, field) && typeof layer.text === "string") {
+        const nextText = values[field];
         return {
           ...layer,
-          text: ["roll_number", "phone", "blood_group", "expiry_date"].includes(layer.field) && layer.text.includes(":")
+          text: ["roll_number", "phone", "blood_group", "expiry_date"].includes(field) && layer.text.includes(":")
             ? `${layer.text.split(":")[0]}: ${nextText}`
             : nextText
         };
       }
-      if (layer.field === "color" && layer.role === "accent" && values.color) {
+      if (field === "color" && layer.role === "accent" && values.color) {
         return { ...layer, fill: values.color };
       }
       return layer;
@@ -352,7 +365,7 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
           if (field === "color" && layer.role === "accent") {
             return { ...layer, fill: value };
           }
-          if (layer.field !== field || typeof layer.text !== "string") return layer;
+          if (layerField(layer) !== field || typeof layer.text !== "string") return layer;
           const nextText = ["roll_number", "phone", "blood_group", "expiry_date"].includes(field) && layer.text.includes(":")
             ? `${layer.text.split(":")[0]}: ${value}`
             : value;
@@ -362,7 +375,7 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
     },
     replaceImage(field, dataUrl) {
       setLayers((current) =>
-        current.map((layer) => (layer.field === field && layer.type === "image" ? { ...layer, src: dataUrl, placeholder: false } : layer))
+        current.map((layer) => (layerField(layer) === field && layer.type === "image" ? { ...layer, src: dataUrl, placeholder: false } : layer))
       );
     }
   }));
@@ -524,6 +537,10 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
     updateLayer(activeLayer.id ?? "", (layer) => ({ ...layer, locked: !layer.locked }));
   }
 
+  function toggleVisibleLayer(id: string) {
+    updateLayer(id, (layer) => ({ ...layer, visible: layer.visible === false }));
+  }
+
   function openTextEditor() {
     if (!activeLayer || activeLayer.type !== "text") return;
     if (typeof window === "undefined") return;
@@ -537,6 +554,10 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
     if (activeLayer?.type === "text") {
       updateActive({ fill: color });
     }
+  }
+
+  function setOpacity(value: number) {
+    updateActive({ opacity: Math.max(0, Math.min(1, value / 100)) });
   }
 
   function renderLayer(layer: TemplateCanvasObject) {
@@ -554,8 +575,8 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
         width={w + 4}
         height={h + 4}
         fill="none"
-        stroke="#4A90E2"
-        strokeDasharray="6,3"
+        stroke="#8b3dff"
+        strokeDasharray="5,4"
         strokeWidth={2}
         pointerEvents="none"
       />
@@ -646,8 +667,8 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
             fill="none"
             height={layer.height ?? estimateTextHeight(layer)}
             pointerEvents="none"
-            stroke="#4A90E2"
-            strokeDasharray="6,3"
+            stroke="#8b3dff"
+            strokeDasharray="5,4"
             strokeWidth={2}
             width={layer.width ?? layer.w ?? 0}
             x={x - 2}
@@ -658,177 +679,304 @@ export const TemplateEditor = forwardRef<TemplateEditorHandle, TemplateEditorPro
     );
   }
 
-  return (
-    <div className="grid items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="sticky top-4 z-20 self-start rounded-[1rem] border border-black/10 bg-white p-3 shadow-sm">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-graphite">Tools</p>
-        <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
-          <ToolButton label="Add text" onClick={addTextLayer}>T</ToolButton>
-          <label className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 bg-white text-sm text-ink transition hover:border-black/25 hover:bg-mist" title="Add image">
-            Img
-            <input accept="image/*" className="sr-only" onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) uploadImageLayer(file);
-            }} type="file" />
-          </label>
-          <ToolButton label="Rectangle" onClick={addRectangleLayer}>▭</ToolButton>
-          <ToolButton label="Circle" onClick={addCircleLayer}>○</ToolButton>
-          <ToolButton label="Line" onClick={addLineLayer}>╱</ToolButton>
-          <ToolButton label="Bold" onClick={() => toggleTextStyle("fontWeight")}>B</ToolButton>
-          <ToolButton label="Italic" onClick={() => toggleTextStyle("fontStyle")}><span className="italic">I</span></ToolButton>
-          <ToolButton label="Underline" onClick={() => toggleTextStyle("underline")}><span className="underline">U</span></ToolButton>
-          <ToolButton label="Align left" onClick={() => alignText("left")}>L</ToolButton>
-          <ToolButton label="Align center" onClick={() => alignText("center")}>C</ToolButton>
-          <ToolButton label="Align right" onClick={() => alignText("right")}>R</ToolButton>
-          <ToolButton label="Duplicate" onClick={duplicateLayer}>⧉</ToolButton>
-          <ToolButton label="Delete" onClick={deleteLayer}>×</ToolButton>
-          <ToolButton label="Bring forward" onClick={() => moveLayer("forward")}>↑</ToolButton>
-          <ToolButton label="Send backward" onClick={() => moveLayer("backward")}>↓</ToolButton>
-        </div>
+  const activeLayerName = activeLayer?.name ?? activeLayer?.id ?? "No selection";
+  const activeLayerType = activeLayer?.type ?? "canvas";
+  const canEditText = activeLayer?.type === "text";
+  const canEditShape = Boolean(activeLayer && ["rect", "ellipse", "circle", "line"].includes(String(activeLayer.type)));
+  const canEditImage = activeLayer?.type === "image";
+  const activeOpacity = Math.round((activeLayer?.opacity ?? 1) * 100);
+  const scaledWidth = Math.max(240, (layout.width * zoom) / 100);
+  const scaledHeight = Math.max(240, (layout.height * zoom) / 100);
 
-        <div className="mt-4 grid gap-3 border-t border-black/10 pt-4">
-          <label className="grid gap-1 text-xs font-medium text-graphite">
-            Text
-            <input
-              className="min-h-9 rounded-md border border-black/10 px-2 text-sm text-ink"
-              onChange={(event) => {
-                setSelectedText(event.target.value);
-                updateActive({ text: event.target.value });
-              }}
-              value={selectedText}
-            />
-          </label>
-          <label className="grid gap-1 text-xs font-medium text-graphite">
-            Font
-            <select
-              className="min-h-9 rounded-md border border-black/10 px-2 text-sm text-ink"
-              onChange={(event) => {
-                setSelectedFontFamily(event.target.value);
-                updateActive({ fontFamily: event.target.value });
-              }}
-              value={selectedFontFamily}
-            >
-              <option value="Inter">Inter</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Times New Roman">Serif</option>
-              <option value="Brush Script MT">Handwriting</option>
-              <option value="Courier New">Mono</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-xs font-medium text-graphite">
-            Font size
-            <input
-              className="min-h-9 rounded-md border border-black/10 px-2 text-sm text-ink"
-              min="8"
-              max="96"
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                setSelectedFontSize(value);
-                updateActive({ fontSize: value });
-              }}
-              type="number"
-              value={selectedFontSize}
-            />
-          </label>
-          <label className="grid gap-1 text-xs font-medium text-graphite">
-            Border radius
-            <input
-              className="min-h-9 rounded-md border border-black/10 px-2 text-sm text-ink"
-              min="0"
-              max="80"
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                setSelectedRadius(value);
-                updateActive({ rx: value, ry: value });
-              }}
-              type="number"
-              value={selectedRadius}
-            />
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            <label className="grid gap-1 text-xs font-medium text-graphite">
-              Text
-              <input className="h-9 w-full rounded-md border border-black/10" onChange={(event) => applyColor(event.target.value)} type="color" value={selectedFill} />
-            </label>
-            <label className="grid gap-1 text-xs font-medium text-graphite">
-              Fill
-              <input
-                className="h-9 w-full rounded-md border border-black/10"
-                onChange={(event) => {
-                  setSelectedFill(event.target.value);
-                  updateActive({ fill: event.target.value });
-                }}
-                type="color"
-                value={selectedFill}
-              />
-            </label>
-            <label className="grid gap-1 text-xs font-medium text-graphite">
-              Border
-              <input
-                className="h-9 w-full rounded-md border border-black/10"
-                onChange={(event) => {
-                  setSelectedStroke(event.target.value);
-                  updateActive({ stroke: event.target.value, strokeWidth: 2 });
-                }}
-                type="color"
-                value={selectedStroke}
-              />
-            </label>
+  return (
+    <div className="min-h-[46rem] overflow-hidden border border-black/10 bg-[#f0f1f5] text-ink">
+      <div className="flex min-h-14 items-center justify-between border-b border-black/10 bg-white px-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center bg-[#8b3dff] text-sm font-black text-white">PN</div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-ink">{activeLayerName}</p>
+            <p className="text-xs text-graphite">{layout.width} x {layout.height}px artboard</p>
           </div>
         </div>
-      </aside>
-
-      <div className="relative z-0 flex min-h-[42rem] items-start justify-center rounded-[1.5rem] border border-black/10 bg-white p-4 shadow-sm">
-        <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-          SVG template editor
+        <div className="flex items-center gap-2">
+          <button className="h-9 border border-black/10 bg-white px-3 text-sm font-semibold text-ink disabled:opacity-40" disabled={!activeLayer} onClick={duplicateLayer} type="button">Duplicate</button>
+          <button className="h-9 border border-black/10 bg-white px-3 text-sm font-semibold text-ink disabled:opacity-40" disabled={!activeLayer} onClick={toggleLockLayer} type="button">
+            {activeLayer?.locked ? "Unlock" : "Lock"}
+          </button>
+          <button className="h-9 border border-black/10 bg-white px-3 text-sm font-semibold text-ink disabled:opacity-40" disabled={!activeLayer || activeLayer?.id === "bg"} onClick={deleteLayer} type="button">Delete</button>
         </div>
-        <div className="flex h-full w-full items-start justify-center pt-2">
-          <svg
-            ref={svgRef}
-            preserveAspectRatio="xMidYMid meet"
-            style={{
-              width: "100%",
-              height: "100%",
-              maxWidth: "100%",
-              maxHeight: "100%",
-              display: "block"
+      </div>
+
+      <div className="flex min-h-12 flex-wrap items-center gap-2 border-b border-black/10 bg-white px-3 py-2">
+        <select
+          className="h-9 min-w-36 border border-black/10 bg-white px-2 text-sm disabled:opacity-40"
+          disabled={!canEditText}
+          onChange={(event) => {
+            setSelectedFontFamily(event.target.value);
+            updateActive({ fontFamily: event.target.value });
+          }}
+          value={selectedFontFamily}
+        >
+          <option value="Inter">Inter</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Times New Roman">Serif</option>
+          <option value="Brush Script MT">Handwriting</option>
+          <option value="Courier New">Mono</option>
+        </select>
+        <input
+          className="h-9 w-20 border border-black/10 bg-white px-2 text-sm disabled:opacity-40"
+          disabled={!canEditText}
+          min="8"
+          max="140"
+          onChange={(event) => {
+            const value = Number(event.target.value);
+            setSelectedFontSize(value);
+            updateActive({ fontSize: value });
+          }}
+          type="number"
+          value={selectedFontSize}
+        />
+        <button className="h-9 w-9 border border-black/10 bg-white text-sm font-black disabled:opacity-40" disabled={!canEditText} onClick={() => toggleTextStyle("fontWeight")} type="button">B</button>
+        <button className="h-9 w-9 border border-black/10 bg-white text-sm font-black italic disabled:opacity-40" disabled={!canEditText} onClick={() => toggleTextStyle("fontStyle")} type="button">I</button>
+        <button className="h-9 w-9 border border-black/10 bg-white text-sm font-black underline disabled:opacity-40" disabled={!canEditText} onClick={() => toggleTextStyle("underline")} type="button">U</button>
+        <div className="flex border border-black/10">
+          <button className="h-9 w-9 bg-white text-xs font-bold disabled:opacity-40" disabled={!canEditText} onClick={() => alignText("left")} type="button">L</button>
+          <button className="h-9 w-9 border-x border-black/10 bg-white text-xs font-bold disabled:opacity-40" disabled={!canEditText} onClick={() => alignText("center")} type="button">C</button>
+          <button className="h-9 w-9 bg-white text-xs font-bold disabled:opacity-40" disabled={!canEditText} onClick={() => alignText("right")} type="button">R</button>
+        </div>
+        <label className="flex h-9 items-center gap-2 border border-black/10 bg-white px-2 text-xs font-bold text-graphite">
+          Fill
+          <input
+            className="h-5 w-8 border border-black/10"
+            disabled={!activeLayer}
+            onChange={(event) => {
+              setSelectedFill(event.target.value);
+              updateActive({ fill: event.target.value });
             }}
-            viewBox={`0 0 ${layout.width} ${layout.height}`}
-            onPointerMove={handlePointerMove}
-            onPointerUp={(event) => {
-              stopDragging();
-              releasePointerCapture(event);
+            type="color"
+            value={selectedFill}
+          />
+        </label>
+        <label className="flex h-9 items-center gap-2 border border-black/10 bg-white px-2 text-xs font-bold text-graphite">
+          Stroke
+          <input
+            className="h-5 w-8 border border-black/10"
+            disabled={!activeLayer}
+            onChange={(event) => {
+              setSelectedStroke(event.target.value);
+              updateActive({ stroke: event.target.value, strokeWidth: 2 });
             }}
-            onPointerCancel={(event) => {
-              stopDragging();
-              releasePointerCapture(event);
-            }}
-            onPointerLeave={(event) => {
-              if (dragRef.current) {
-                stopDragging();
-                releasePointerCapture(event);
-              }
-            }}
-            onPointerDown={(event) => {
-              if (event.target === event.currentTarget) {
-                setSelectedId(null);
-              }
-            }}
-          >
-            <defs>
-              {clipLayers.map((layer) => {
-                const { x, y, w, h } = layerBox(layer);
+            type="color"
+            value={selectedStroke}
+          />
+        </label>
+        <label className="flex h-9 items-center gap-2 border border-black/10 bg-white px-2 text-xs font-bold text-graphite">
+          Opacity
+          <input className="w-24" disabled={!activeLayer} max="100" min="0" onChange={(event) => setOpacity(Number(event.target.value))} type="range" value={activeOpacity} />
+        </label>
+        <button className="h-9 border border-black/10 bg-white px-3 text-sm font-semibold disabled:opacity-40" disabled={!activeLayer} onClick={() => moveLayer("forward")} type="button">Forward</button>
+        <button className="h-9 border border-black/10 bg-white px-3 text-sm font-semibold disabled:opacity-40" disabled={!activeLayer} onClick={() => moveLayer("backward")} type="button">Backward</button>
+      </div>
+
+      <div className="grid min-h-[40rem] lg:grid-cols-[4.5rem_17rem_minmax(0,1fr)]">
+        <nav className="flex border-r border-black/10 bg-[#111827] text-white lg:flex-col">
+          {[
+            ["design", "Design"],
+            ["text", "Text"],
+            ["uploads", "Uploads"],
+            ["elements", "Elements"],
+            ["layers", "Layers"]
+          ].map(([id, label]) => (
+            <button
+              className={["flex min-h-16 flex-1 flex-col items-center justify-center gap-1 px-2 text-[11px] font-bold transition lg:flex-none", activePanel === id ? "bg-[#8b3dff] text-white" : "text-white/75 hover:bg-white/10 hover:text-white"].join(" ")}
+              key={id}
+              onClick={() => setActivePanel(id as typeof activePanel)}
+              type="button"
+            >
+              <span className="text-lg">{label.slice(0, 1)}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <aside className="border-r border-black/10 bg-white">
+          <div className="border-b border-black/10 p-4">
+            <p className="text-sm font-black text-ink">{activePanel === "design" ? "Design tools" : activePanel === "text" ? "Text" : activePanel === "uploads" ? "Uploads" : activePanel === "elements" ? "Elements" : "Layers"}</p>
+            <p className="mt-1 text-xs text-graphite">{activeLayer ? `${activeLayerType} selected` : "Select an item on the artboard"}</p>
+          </div>
+
+          {activePanel === "design" ? (
+            <div className="grid gap-3 p-4">
+              <button className="min-h-11 bg-[#8b3dff] px-4 text-sm font-bold text-white" onClick={addTextLayer} type="button">Add heading</button>
+              <button className="min-h-11 border border-black/10 bg-white px-4 text-sm font-bold text-ink" onClick={addRectangleLayer} type="button">Add shape block</button>
+              <button className="min-h-11 border border-black/10 bg-white px-4 text-sm font-bold text-ink" onClick={addCircleLayer} type="button">Add circle</button>
+              <button className="min-h-11 border border-black/10 bg-white px-4 text-sm font-bold text-ink" onClick={addLineLayer} type="button">Add line</button>
+              <div className="grid grid-cols-5 gap-2 border-t border-black/10 pt-4">
+                {["#111827", "#8b3dff", "#2563eb", "#0f766e", "#ea580c", "#dc2626", "#f59e0b", "#ffffff", "#f8fafc", "#000000"].map((color) => (
+                  <button
+                    aria-label={`Use ${color}`}
+                    className="h-8 border border-black/10"
+                    key={color}
+                    onClick={() => {
+                      setSelectedFill(color);
+                      updateActive({ fill: color });
+                    }}
+                    style={{ backgroundColor: color }}
+                    type="button"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {activePanel === "text" ? (
+            <div className="grid gap-4 p-4">
+              <button className="min-h-11 bg-[#8b3dff] px-4 text-sm font-bold text-white" onClick={addTextLayer} type="button">Add text box</button>
+              <label className="grid gap-2 text-xs font-bold text-graphite">
+                Content
+                <textarea
+                  className="min-h-32 border border-black/10 px-3 py-2 text-sm font-medium text-ink disabled:bg-mist"
+                  disabled={!canEditText}
+                  onChange={(event) => {
+                    setSelectedText(event.target.value);
+                    updateActive({ text: event.target.value });
+                  }}
+                  value={selectedText}
+                />
+              </label>
+              <label className="grid gap-2 text-xs font-bold text-graphite">
+                Letter spacing
+                <input
+                  className="h-10 border border-black/10 px-2 text-sm disabled:bg-mist"
+                  disabled={!canEditText}
+                  max="12"
+                  min="0"
+                  onChange={(event) => updateActive({ letterSpacing: Number(event.target.value) })}
+                  type="number"
+                  value={Number(activeLayer?.letterSpacing ?? 0)}
+                />
+              </label>
+            </div>
+          ) : null}
+
+          {activePanel === "uploads" ? (
+            <div className="grid gap-4 p-4">
+              <label className="grid min-h-32 cursor-pointer place-items-center border border-dashed border-black/25 bg-mist px-4 text-center text-sm font-bold text-ink">
+                Upload image
+                <input accept="image/*" className="sr-only" onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) uploadImageLayer(file);
+                }} type="file" />
+              </label>
+              <p className="text-xs leading-5 text-graphite">Uploaded images can be dragged on the artboard and reordered from the Layers panel.</p>
+            </div>
+          ) : null}
+
+          {activePanel === "elements" ? (
+            <div className="grid gap-3 p-4">
+              <button className="min-h-11 border border-black/10 bg-white px-4 text-sm font-bold text-ink" onClick={addRectangleLayer} type="button">Rectangle</button>
+              <button className="min-h-11 border border-black/10 bg-white px-4 text-sm font-bold text-ink" onClick={addCircleLayer} type="button">Circle</button>
+              <button className="min-h-11 border border-black/10 bg-white px-4 text-sm font-bold text-ink" onClick={addLineLayer} type="button">Line</button>
+              <label className="grid gap-2 border-t border-black/10 pt-4 text-xs font-bold text-graphite">
+                Corner radius
+                <input
+                  className="h-10 border border-black/10 px-2 text-sm disabled:bg-mist"
+                  disabled={!canEditShape}
+                  max="80"
+                  min="0"
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    setSelectedRadius(value);
+                    updateActive({ rx: value, ry: value });
+                  }}
+                  type="number"
+                  value={selectedRadius}
+                />
+              </label>
+            </div>
+          ) : null}
+
+          {activePanel === "layers" ? (
+            <div className="max-h-[34rem] overflow-y-auto p-3">
+              {layers.map((layer, index) => {
+                const id = layer.id ?? `layer-${index}`;
                 return (
-                  <clipPath id={`clip-${layer.id}`} key={layer.id}>
-                    <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} />
-                  </clipPath>
+                  <div className={["mb-2 grid grid-cols-[1fr_auto] items-center gap-2 border px-3 py-2", selectedId === id ? "border-[#8b3dff] bg-[#f4efff]" : "border-black/10 bg-white"].join(" ")} key={id}>
+                    <button className="min-w-0 text-left" onClick={() => selectLayerById(id)} type="button">
+                      <span className="block truncate text-sm font-bold text-ink">{layer.name ?? id}</span>
+                      <span className="text-xs text-graphite">{layer.type ?? "layer"}</span>
+                    </button>
+                    <button className="h-8 w-8 border border-black/10 bg-white text-xs font-bold" onClick={() => toggleVisibleLayer(id)} type="button">
+                      {layer.visible === false ? "Off" : "On"}
+                    </button>
+                  </div>
                 );
               })}
-            </defs>
-            <rect fill={layout.background} x="0" y="0" width={layout.width} height={layout.height} />
-            {renderLayers.map((layer) => renderLayer(layer))}
-          </svg>
-        </div>
+            </div>
+          ) : null}
+        </aside>
+
+        <main className="grid min-h-[40rem] grid-rows-[minmax(0,1fr)_3.25rem] bg-[#edf0f5]">
+          <div className="flex min-h-0 items-center justify-center overflow-auto p-8">
+            <div
+              className="bg-white shadow-[0_8px_32px_rgba(15,23,42,0.18)]"
+              style={{ width: scaledWidth, height: scaledHeight }}
+            >
+              <svg
+                ref={svgRef}
+                preserveAspectRatio="xMidYMid meet"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "block"
+                }}
+                viewBox={`0 0 ${layout.width} ${layout.height}`}
+                onPointerMove={handlePointerMove}
+                onPointerUp={(event) => {
+                  stopDragging();
+                  releasePointerCapture(event);
+                }}
+                onPointerCancel={(event) => {
+                  stopDragging();
+                  releasePointerCapture(event);
+                }}
+                onPointerLeave={(event) => {
+                  if (dragRef.current) {
+                    stopDragging();
+                    releasePointerCapture(event);
+                  }
+                }}
+                onPointerDown={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setSelectedId(null);
+                  }
+                }}
+              >
+                <defs>
+                  {clipLayers.map((layer) => {
+                    const { x, y, w, h } = layerBox(layer);
+                    return (
+                      <clipPath id={`clip-${layer.id}`} key={layer.id}>
+                        <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} />
+                      </clipPath>
+                    );
+                  })}
+                </defs>
+                <rect fill={layout.background} x="0" y="0" width={layout.width} height={layout.height} />
+                {renderLayers.map((layer) => renderLayer(layer))}
+              </svg>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-black/10 bg-white px-4">
+            <div className="text-xs font-bold text-graphite">{activeLayer ? `${activeLayerType}: ${activeLayerName}` : "Canvas"}</div>
+            <div className="flex items-center gap-3">
+              <button className="h-8 w-8 border border-black/10 bg-white text-sm font-bold" onClick={() => setZoom((value) => Math.max(35, value - 10))} type="button">-</button>
+              <input className="w-32" max="160" min="35" onChange={(event) => setZoom(Number(event.target.value))} type="range" value={zoom} />
+              <button className="h-8 w-8 border border-black/10 bg-white text-sm font-bold" onClick={() => setZoom((value) => Math.min(160, value + 10))} type="button">+</button>
+              <span className="w-12 text-right text-xs font-bold text-graphite">{zoom}%</span>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

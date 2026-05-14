@@ -21,7 +21,7 @@ const adminSteps = [
 export default function AdminHomePage() {
   return (
     <section className="space-y-8">
-      <div className="border-l-4 border-press bg-white/80 p-5">
+      <div className="atelier-hero p-5 sm:p-7">
         <p className="eyebrow">Admin</p>
         <h1 className="mt-4 text-5xl font-black text-ink">PrintNepal control center.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-graphite">
@@ -30,10 +30,10 @@ export default function AdminHomePage() {
       </div>
 
       <div className="print-panel p-5">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-press">Workflow</p>
+        <p className="text-xs font-bold uppercase tracking-[0.08em] text-press">Workflow</p>
         <div className="mt-4 flex flex-wrap gap-3">
           {adminSteps.map((step) => (
-            <span key={step} className="border border-black/10 bg-mist px-4 py-2 text-sm font-semibold text-ink">
+            <span key={step} className="atelier-chip px-4 py-2 text-sm font-semibold text-ink">
               {step}
             </span>
           ))}
@@ -42,7 +42,7 @@ export default function AdminHomePage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {adminTiles.map((tile) => (
-          <Link key={tile.href} className="border border-ink/10 bg-white p-5 shadow-sm transition hover:-translate-x-1 hover:-translate-y-1 hover:shadow-lift" href={tile.href}>
+          <Link key={tile.href} className="atelier-card p-5 transition hover:-translate-y-1" href={tile.href}>
             <h2 className="text-lg font-black text-ink">{tile.title}</h2>
             <p className="mt-2 text-sm leading-6 text-graphite">{tile.description}</p>
           </Link>

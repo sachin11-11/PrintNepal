@@ -14,6 +14,7 @@ import {
   type CatalogOption,
   type PrintProduct
 } from "@/lib/print-order-catalog";
+import { LOCAL_TEMPLATE_CATALOG } from "@/lib/templates/catalog";
 
 type DesignMode = "upload" | "template" | "help";
 type FulfillmentMode = "pickup" | "delivery";
@@ -27,8 +28,6 @@ type Receipt = {
 };
 
 const steps = ["Product", "Specs", "Design", "Fulfillment", "Payment"] as const;
-
-const categoryNames = ["All", ...Array.from(new Set(printCatalog.map((product) => product.category)))];
 
 const categoryVisuals: Record<string, { label: string; tone: string }> = {
   All: { label: "ALL", tone: "bg-[var(--solid)] text-[var(--solid-text)]" },
@@ -141,8 +140,47 @@ const walletVisuals: Record<string, Visual> = {
   cod: { label: "PAY", icon: "cash", tone: "bg-neutral-200 text-neutral-950" }
 };
 
+const templateCategoriesByProduct: Record<string, string[]> = {
+  "business-card": ["business"],
+  "gift-card": ["business"],
+  coupon: ["postcard", "flyer", "business"],
+  "thank-you-card": ["business"],
+  "id-card": ["id-card", "student-id"],
+  "membership-card": ["id-card", "student-id"],
+  "event-pass": ["id-card", "student-id"],
+  "wedding-card": ["wedding"],
+  "invitation-card": ["wedding"],
+  "birthday-card": ["birthday"],
+  "greeting-card": ["birthday"],
+  "vinyl-sticker": ["sticker"],
+  "label-sticker": ["sticker"],
+  "die-cut-sticker": ["sticker"],
+  "sticker-sheet": ["sticker"],
+  "wall-sticker": ["sticker"],
+  "vehicle-sticker": ["sticker"],
+  "box-label": ["sticker"],
+  "letter-head": ["letterhead"],
+  brochure: ["brochure"],
+  flyer: ["flyer"],
+  poster: ["poster"],
+  certificate: ["certificate"],
+  booklet: ["booklet"],
+  catalog: ["booklet", "brochure"],
+  manual: ["booklet"],
+  "company-profile": ["booklet", "brochure"],
+  "menu-card": ["menu"],
+  "table-tent": ["menu"],
+  postcard: ["postcard"],
+  "door-hanger": ["flyer", "postcard"],
+  ticket: ["postcard", "flyer"]
+};
+
 function currency(value: number) {
   return `NPR ${Math.round(value).toLocaleString("en-IN")}`;
+}
+
+function optionPrice(option: CatalogOption) {
+  return option.add ? `+ ${currency(option.add)} each` : "Included";
 }
 
 function findOption(options: CatalogOption[], id: string) {
@@ -163,6 +201,27 @@ function isValidQuantity(value: number, product: PrintProduct) {
 
 function walletName(id: string) {
   return walletOptions.find((wallet) => wallet.id === id)?.label ?? "Wallet";
+}
+
+function templateCategoriesForProduct(product: PrintProduct) {
+  const explicit = templateCategoriesByProduct[product.id];
+  if (explicit) return explicit;
+
+  const name = product.name.toLowerCase();
+  if (name.includes("sticker") || name.includes("label")) return ["sticker"];
+  if (name.includes("wedding") || name.includes("invitation")) return ["wedding"];
+  if (name.includes("birthday")) return ["birthday"];
+  if (name.includes("id card")) return ["id-card", "student-id"];
+  if (name.includes("business card")) return ["business"];
+  if (name.includes("brochure")) return ["brochure"];
+  if (name.includes("flyer") || name.includes("pamphlet")) return ["flyer"];
+  if (name.includes("poster")) return ["poster"];
+  if (name.includes("certificate")) return ["certificate"];
+  if (name.includes("letterhead")) return ["letterhead"];
+  if (name.includes("booklet") || name.includes("catalog") || name.includes("manual") || name.includes("profile")) return ["booklet"];
+  if (name.includes("menu")) return ["menu"];
+  if (name.includes("postcard")) return ["postcard"];
+  return [];
 }
 
 function Icon({ name }: { name: VisualIcon }) {
@@ -214,9 +273,9 @@ function VisualCue({
     <span
       aria-hidden="true"
       className={[
-        "flex shrink-0 items-center justify-center overflow-hidden border font-bold uppercase tracking-[0.08em]",
-        size === "sm" ? "h-8 w-8 text-[9px]" : size === "lg" ? "h-14 w-16 text-[11px]" : "h-11 w-11 text-[11px]",
-        active ? "border-white/30 bg-[var(--surface)] text-ink" : `border-black/10 ${tone ?? "bg-mist text-ink"}`
+        "flex shrink-0 items-center justify-center overflow-hidden border border-ink/10 font-bold uppercase tracking-[0.08em]",
+        size === "sm" ? "h-8 w-8 text-[9px]" : size === "lg" ? "h-14 w-16 text-[11px]" : "h-10 w-10 text-[11px]",
+        active ? "bg-[var(--surface)] text-ink" : `${tone ?? "bg-mist text-ink"}`
       ].join(" ")}
     >
       {image ? (
@@ -254,18 +313,32 @@ function OptionButton({
 }) {
   return (
     <button
+      aria-checked={active}
+      role="radio"
       className={[
-        "min-h-16 rounded-lg border px-4 py-3 text-left transition",
-        active ? "order-selected" : "border-black/10 bg-white text-ink hover:border-[var(--action)]"
+        "group min-h-16 border px-4 py-3 text-left transition",
+        active ? "border-[var(--action)] bg-[var(--action-soft)] text-ink" : "border-ink/15 bg-[var(--surface)] text-ink hover:border-[var(--action)] hover:bg-mist"
       ].join(" ")}
       onClick={onClick}
       type="button"
     >
       <span className="flex items-center gap-3">
-        <VisualCue active={active} icon={visual.icon} image={visual.image} label={visual.label} tone={visual.tone} />
+        <span
+          aria-hidden="true"
+          className={[
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition",
+            active ? "border-[var(--action)] bg-[var(--surface)]" : "border-graphite bg-[var(--surface)]"
+          ].join(" ")}
+        >
+          {active ? <span className="h-2.5 w-2.5 rounded-full bg-[var(--action)]" /> : null}
+        </span>
+        <VisualCue active={active} icon={visual.icon} image={visual.image} label={visual.label} size="sm" tone={visual.tone} />
         <span className="min-w-0">
           <span className="block text-sm font-semibold">{label}</span>
           {meta ? <span className={["mt-1 block text-xs", active ? "opacity-75" : "text-graphite"].join(" ")}>{meta}</span> : null}
+        </span>
+        <span className={["ml-auto shrink-0 text-xs font-bold", active ? "text-[var(--action)]" : "text-graphite"].join(" ")}>
+          {active ? "Selected" : "Select"}
         </span>
       </span>
     </button>
@@ -280,7 +353,6 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const [hasSelectedProduct, setHasSelectedProduct] = useState(Boolean(initialSelectedProduct));
   const [step, setStep] = useState(initialSelectedProduct ? 1 : 0);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
   const [productId, setProductId] = useState(initialProduct.id);
   const product = printCatalog.find((item) => item.id === productId) ?? printCatalog[0];
   const availableSizes = allowedOptions(sizeOptions, product.sizes);
@@ -291,6 +363,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const [quantity, setQuantity] = useState<QuantityValue>("");
   const [designMode, setDesignMode] = useState<DesignMode | "">("");
   const [fileName, setFileName] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [fulfillment, setFulfillment] = useState<FulfillmentMode | "">("");
   const [areaId, setAreaId] = useState("");
   const [location, setLocation] = useState("");
@@ -306,6 +379,11 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const selectedSize = availableSizes.find((item) => item.id === sizeId);
   const selectedPaper = availablePapers.find((item) => item.id === paperId);
   const selectedFinishing = finishingOptions.find((item) => item.id === finishingId);
+  const articleTemplates = useMemo(() => {
+    const categories = templateCategoriesForProduct(product);
+    return LOCAL_TEMPLATE_CATALOG.filter((template) => template.category && categories.includes(template.category));
+  }, [product]);
+  const selectedTemplate = articleTemplates.find((template) => template.id === selectedTemplateId);
   const selectedArea = fulfillment === "pickup"
     ? deliveryAreas.find((area) => area.id === "pickup")
     : deliveryAreas.find((area) => area.id === areaId);
@@ -319,7 +397,11 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const deliveryFee = fulfillment === "delivery" && selectedArea ? selectedArea.add ?? 0 : 0;
   const grandTotal = printSubtotal + designCharge + deliveryFee;
   const specsComplete = Boolean(selectedSize && selectedPaper && selectedFinishing);
-  const designComplete = Boolean(quantityIsValid && designMode && (designMode !== "upload" || fileName));
+  const designComplete = Boolean(
+    quantityIsValid &&
+    designMode &&
+    (designMode === "upload" ? fileName : designMode === "template" ? selectedTemplate : true)
+  );
   const fulfillmentComplete = Boolean(
     customer.name.trim() &&
     customer.phone.trim() &&
@@ -335,6 +417,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     true;
   const canPlaceOrder = specsComplete && designComplete && fulfillmentComplete && paymentComplete;
   const progressPercent = hasSelectedProduct ? Math.min(100, Math.max(0, Math.round((Math.min(step, 4) / 4) * 100))) : 0;
+  const currentStepLabel = step < steps.length ? steps[step] : "Receipt";
   const showSearchResults = query.trim().length > 0;
 
   const filteredProducts = useMemo(() => {
@@ -346,13 +429,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     });
   }, [query]);
 
-  const featuredProducts = useMemo(() => {
-    const baseProducts = category === "All"
-      ? printCatalog.filter((item) => item.popular)
-      : printCatalog.filter((item) => item.category === category);
-
-    return (baseProducts.length ? baseProducts : printCatalog).slice(0, 6);
-  }, [category]);
+  const visibleProducts = showSearchResults ? filteredProducts.slice(0, 12) : printCatalog;
 
   function selectProduct(nextProduct: PrintProduct) {
     setProductId(nextProduct.id);
@@ -362,6 +439,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     setFinishingId("");
     setDesignMode("");
     setFileName("");
+    setSelectedTemplateId("");
     setFulfillment("");
     setAreaId("");
     setLocation("");
@@ -399,44 +477,48 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     setStep(5);
   }
 
-  const quoteRows = [
-    ["Product", product.name],
-    ["Size", selectedSize?.label ?? "Required"],
-    ["Paper", selectedPaper?.label ?? "Required"],
-    ["Quantity", quantityIsValid ? `${effectiveQuantity} ${product.unit}` : "Required"],
-    ["Admin-set MOQ", `${product.minQuantity} ${product.unit}`],
-    ["Turnaround", `${product.turnaroundHours} hours`],
-    ["Design", designMode === "upload" ? fileName || "Upload required" : designMode === "template" ? "Use PrintNepal template" : designMode === "help" ? "Design help" : "Required"],
-    ["Fulfillment", fulfillment === "pickup" ? "Pickup at shop" : fulfillment === "delivery" ? selectedArea?.label ?? "Area required" : "Required"]
-  ];
+  const requiredRows = [
+    ["Specs", specsComplete],
+    ["Artwork", designComplete],
+    ["Delivery", fulfillmentComplete],
+    ["Payment", paymentComplete]
+  ] as const;
 
   return (
-    <div className="print-panel overflow-hidden">
+    <div className="overflow-hidden border border-ink/10 bg-[var(--surface)]">
       {hasSelectedProduct ? (
-      <div className="border-b border-ink/10 bg-mist px-5 py-4 sm:px-6">
-        <div className="grid gap-3">
-          <div className="order-progress-track h-2 overflow-hidden" aria-hidden="true">
+      <div className="bg-mist px-5 py-4 sm:px-6">
+        <div className="grid gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-graphite">Step {Math.min(step + 1, steps.length)} of {steps.length}</p>
+              <p className="mt-1 text-lg font-black text-ink">{currentStepLabel}</p>
+            </div>
+            <p className="border border-ink/10 bg-white px-3 py-1 text-xs font-bold text-graphite">{progressPercent}% complete</p>
+          </div>
+          <div className="order-progress-track h-1.5 overflow-hidden" aria-hidden="true">
             <div className="order-progress-fill h-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {steps.map((label, index) => (
             <button
               aria-current={index === step ? "step" : undefined}
               aria-label={`${label} step`}
               className={[
-                "flex h-10 w-10 items-center justify-center border text-xs font-black transition disabled:cursor-not-allowed",
+                "flex min-h-9 shrink-0 items-center gap-2 border px-3 text-xs font-bold transition disabled:cursor-not-allowed",
                 index === step
                   ? "order-selected"
                   : index < step
                     ? "border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]"
-                    : "border-black/10 bg-white/60 text-graphite disabled:opacity-45"
+                    : "border-ink/10 bg-white/70 text-graphite disabled:opacity-45"
               ].join(" ")}
               disabled={index > step}
               key={label}
               onClick={() => setStep(index)}
               type="button"
             >
-              {index < step ? "✓" : index + 1}
+              <span>{index < step ? "✓" : index + 1}</span>
+              <span>{label}</span>
             </button>
           ))}
           </div>
@@ -444,113 +526,102 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
       </div>
       ) : null}
 
-      <div className={hasSelectedProduct ? "grid lg:grid-cols-[minmax(0,1fr)_22rem]" : "grid"}>
-        <div className="min-h-[42rem] p-5 sm:p-6">
+      <div className={hasSelectedProduct ? "grid lg:grid-cols-[minmax(0,1fr)_23rem]" : "grid"}>
+        <div className="min-h-[36rem] p-5 sm:p-7">
+          {hasSelectedProduct && step > 0 && step < 5 ? (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border border-ink/10 bg-mist p-3">
+              <span className="flex min-w-0 items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="h-14 w-16 shrink-0 border border-ink/10 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${productVisual(product).image})` }}
+                />
+                <span className="min-w-0">
+                  <span className="block truncate text-base font-black text-ink">{product.name}</span>
+                  <span className="mt-1 block text-sm text-graphite">{product.category} · minimum {product.minQuantity} {product.unit}</span>
+                </span>
+              </span>
+              <button className="border border-ink/10 bg-white px-4 py-2 text-sm font-bold text-graphite transition hover:border-[var(--action)] hover:text-ink" onClick={() => setStep(0)} type="button">
+                Change
+              </button>
+            </div>
+          ) : null}
           {step === 0 ? (
-            <div className="grid gap-5">
-              <div>
-                <p className="eyebrow">Select print item</p>
-                <h2 className="mt-3 text-3xl font-black text-ink">What do you want to print?</h2>
+            <div className="order-step-pane grid gap-6">
+              <div className="max-w-2xl">
+                <p className="eyebrow">Select product</p>
+                <h2 className="mt-3 text-4xl font-black leading-tight text-ink">Start with one print item.</h2>
+                <p className="mt-3 text-sm leading-6 text-graphite">
+                  Search or choose the exact print article. Selecting an article moves you to specifications.
+                </p>
               </div>
-              <div className="flex min-h-14 items-center gap-3 border-2 border-ink bg-white px-4 shadow-soft transition focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">
+
+              <div className="atelier-input flex min-h-14 items-center gap-3 px-4 transition">
                 <SearchIcon />
                 <input
                   className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400"
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search letter head, sticker, ID card, brochure"
+                  placeholder="Search letterhead, sticker, ID card, brochure"
                   value={query}
                 />
-              </div>
-              <div className="transition-all duration-300 ease-out">
-                {showSearchResults ? (
-                  <div className="max-h-[28rem] overflow-y-auto border border-ink/10 bg-white shadow-sm">
-                  {filteredProducts.length ? filteredProducts.map((item) => (
-                    <button
-                      className={[
-                        "grid w-full gap-2 border-b border-black/10 px-4 py-3 text-left transition last:border-b-0 sm:grid-cols-[1fr_auto]",
-                        hasSelectedProduct && product.id === item.id ? "bg-[var(--solid)] text-[var(--solid-text)]" : "bg-white text-ink hover:bg-mist"
-                      ].join(" ")}
-                      key={item.id}
-                      onClick={() => selectProduct(item)}
-                      type="button"
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <VisualCue active={hasSelectedProduct && product.id === item.id} image={productVisual(item).image} label={productVisual(item).label} size="lg" tone={productVisual(item).tone} />
-                        <span className="min-w-0">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold">{item.name}</span>
-                            {item.popular ? <span className="border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">Popular</span> : null}
-                          </span>
-                          <span className={["mt-1 block text-sm", hasSelectedProduct && product.id === item.id ? "opacity-75" : "text-graphite"].join(" ")}>
-                            {item.category} - min {item.minQuantity} {item.unit}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="text-sm font-semibold">{currency(item.basePrice)} / {item.unit}</span>
-                    </button>
-                  )) : (
-                    <div className="bg-white px-4 py-5 text-sm text-graphite">No matching print products.</div>
-                  )}
-                  </div>
+                {query ? (
+                  <button className="border border-ink/10 bg-mist px-3 py-1 text-xs font-bold text-graphite" onClick={() => setQuery("")} type="button">
+                    Clear
+                  </button>
                 ) : null}
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {categoryNames.map((name) => (
-                  <button
-                    className={[
-                      "flex min-h-10 shrink-0 items-center gap-2 border px-3 text-sm font-semibold transition",
-                      category === name ? "border-[var(--solid)] bg-[var(--solid)] text-[var(--solid-text)]" : "border-black/10 bg-white text-graphite hover:text-ink"
-                    ].join(" ")}
-                    key={name}
-                    onClick={() => setCategory(name)}
-                    type="button"
-                  >
-                    <VisualCue active={category === name} label={categoryVisual(name).label} size="sm" tone={categoryVisual(name).tone} />
-                    <span>{name}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="grid gap-4 border border-ink/10 bg-white p-4 shadow-sm">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-press">Featured catalogue</p>
-                    <h3 className="mt-1 text-xl font-black text-ink">Start with a common print item.</h3>
+
+              <div className="grid gap-4">
+                <div className="border border-ink/10 bg-mist p-3">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-1">
+                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-press">
+                      {showSearchResults ? "Search results" : "Print articles"}
+                    </p>
+                    <p className="text-xs font-semibold text-graphite">{visibleProducts.length} shown</p>
                   </div>
-                  <p className="text-sm text-graphite">{category === "All" ? "Popular orders" : category}</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {featuredProducts.map((item) => (
-                    <button
-                      className="group overflow-hidden border border-ink/10 bg-white text-left transition hover:-translate-x-1 hover:-translate-y-1 hover:border-ink/30 hover:shadow-lift"
-                      key={item.id}
-                      onClick={() => selectProduct(item)}
-                      type="button"
-                    >
-                      <span
-                        className="block aspect-[16/9] bg-mist bg-cover bg-center"
-                        style={{ backgroundImage: `url(${productVisual(item).image})` }}
-                      />
-                      <span className="block p-4">
-                        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-graphite">{item.category}</span>
-                        <span className="mt-2 block text-base font-semibold text-ink">{item.name}</span>
-                        <span className="mt-2 block text-sm text-graphite">
-                          Min {item.minQuantity} {item.unit} - from {currency(item.basePrice)}
+                  <div className="grid gap-2">
+                    {visibleProducts.length ? visibleProducts.map((item) => (
+                      <button
+                        className="group grid gap-3 border border-ink/10 bg-white p-3 text-left transition hover:border-[var(--action)] sm:grid-cols-[1.5rem_4.5rem_minmax(0,1fr)_auto] sm:items-center"
+                        key={item.id}
+                        onClick={() => selectProduct(item)}
+                        type="button"
+                      >
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full border border-graphite bg-[var(--surface)]" aria-hidden="true" />
+                        <span
+                          aria-hidden="true"
+                          className="block aspect-[4/3] border border-ink/10 bg-mist bg-cover bg-center"
+                          style={{ backgroundImage: `url(${productVisual(item).image})` }}
+                        />
+                        <span className="min-w-0">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-base font-black text-ink">{item.name}</span>
+                            {item.popular ? <span className="border border-emerald-800/20 bg-[var(--sage-soft)] px-2 py-0.5 text-xs font-bold text-emerald-800">Popular</span> : null}
+                          </span>
+                          <span className="mt-1 block text-sm text-graphite">
+                            {item.category} · minimum {item.minQuantity} {item.unit}
+                          </span>
                         </span>
-                        <span className="mt-4 inline-flex min-h-9 items-center border border-[var(--solid)] bg-[var(--solid)] px-4 text-sm font-bold text-[var(--solid-text)]">
-                          Select
+                        <span className="flex items-center justify-between gap-3 sm:grid sm:justify-items-end">
+                          <span className="text-sm font-black text-ink">{currency(item.basePrice)}</span>
+                          <span className="border border-[var(--solid)] bg-[var(--solid)] px-4 py-2 text-xs font-bold text-[var(--solid-text)] transition group-hover:bg-press">
+                            Choose
+                          </span>
                         </span>
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    )) : (
+                      <div className="border border-ink/10 bg-white p-6 text-sm text-graphite">No matching print products.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           ) : null}
 
           {step === 1 ? (
-            <div className="grid gap-7">
+            <div className="order-step-pane grid gap-7">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">{product.category}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-graphite">{product.category}</p>
                 <h2 className="mt-3 text-3xl font-semibold text-ink">{product.name} specifications</h2>
               </div>
               <section>
@@ -575,7 +646,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                       active={paperId === option.id}
                       key={option.id}
                       label={option.label}
-                      meta={option.add ? `+ ${currency(option.add)} each` : "Included"}
+                      meta={optionPrice(option)}
                       onClick={() => setPaperId(option.id)}
                       visual={paperVisuals[option.id] ?? { label: "PPR", icon: "paper", tone: "bg-mist text-ink" }}
                     />
@@ -590,7 +661,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                       active={finishingId === option.id}
                       key={option.id}
                       label={option.label}
-                      meta={option.add ? `+ ${currency(option.add)} each` : "Included"}
+                      meta={optionPrice(option)}
                       onClick={() => setFinishingId(option.id)}
                       visual={finishingVisuals[option.id] ?? { label: "FIN", icon: "stack", tone: "bg-mist text-ink" }}
                     />
@@ -601,9 +672,9 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
           ) : null}
 
           {step === 2 ? (
-            <div className="grid gap-7">
+            <div className="order-step-pane grid gap-7">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">Quantity and artwork</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-graphite">Quantity and artwork</p>
                 <h2 className="mt-3 text-3xl font-semibold text-ink">Add count and design file.</h2>
               </div>
               <section>
@@ -614,8 +685,8 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                       Admin-set MOQ for {product.name}: {product.minQuantity} {product.unit}
                     </p>
                   </div>
-                  <div className="flex items-center rounded-full border border-black/10 bg-white p-1">
-                    <button className="h-10 w-10 rounded-full bg-mist text-lg" onClick={() => setQuantity((value) => clampQuantity((typeof value === "number" ? value : product.minQuantity) - 1, product))} type="button">-</button>
+                  <div className="flex items-center border border-ink/10 bg-white">
+                    <button className="h-10 w-10 border-r border-ink/10 bg-mist text-lg" onClick={() => setQuantity((value) => clampQuantity((typeof value === "number" ? value : product.minQuantity) - 1, product))} type="button">-</button>
                     <input
                       className="h-10 w-24 bg-transparent text-center text-sm font-semibold outline-none"
                       min={product.minQuantity}
@@ -624,13 +695,13 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                       type="number"
                       value={quantity}
                     />
-                    <button className="h-10 w-10 rounded-full bg-[var(--solid)] text-lg text-[var(--solid-text)]" onClick={() => setQuantity((value) => clampQuantity((typeof value === "number" ? value : product.minQuantity) + 1, product))} type="button">+</button>
+                    <button className="h-10 w-10 border-l border-ink/10 bg-[var(--solid)] text-lg text-[var(--solid-text)]" onClick={() => setQuantity((value) => clampQuantity((typeof value === "number" ? value : product.minQuantity) + 1, product))} type="button">+</button>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[product.minQuantity, product.minQuantity * 2, product.minQuantity * 5].map((preset) => (
                     <button
-                      className="flex min-h-11 items-center gap-2 border border-black/10 bg-white px-3 text-sm text-ink transition hover:border-black/30"
+                      className="flex min-h-11 items-center gap-2 border border-ink/10 bg-white px-3 text-sm text-ink transition hover:border-[var(--action)]"
                       key={preset}
                       onClick={() => setQuantity(preset)}
                       type="button"
@@ -649,12 +720,18 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
               <section>
                 <h3 className="text-sm font-semibold text-ink">Design source</h3>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <OptionButton active={designMode === "upload"} label="Upload my design" meta="Print-ready file" onClick={() => setDesignMode("upload")} visual={designVisuals.upload} />
+                  <OptionButton active={designMode === "upload"} label="Upload my design" meta="Included" onClick={() => {
+                    setDesignMode("upload");
+                    setSelectedTemplateId("");
+                  }} visual={designVisuals.upload} />
                   <OptionButton active={designMode === "template"} label="Use template" meta="+ NPR 250" onClick={() => setDesignMode("template")} visual={designVisuals.template} />
-                  <OptionButton active={designMode === "help"} label="Need design help" meta="+ NPR 750" onClick={() => setDesignMode("help")} visual={designVisuals.help} />
+                  <OptionButton active={designMode === "help"} label="Need design help" meta="+ NPR 750" onClick={() => {
+                    setDesignMode("help");
+                    setSelectedTemplateId("");
+                  }} visual={designVisuals.help} />
                 </div>
                 {designMode === "upload" ? (
-                  <label className="mt-4 block rounded-xl border border-dashed border-black/20 bg-mist px-4 py-5 text-sm text-graphite">
+                  <label className="mt-4 block border border-ink/10 bg-mist px-4 py-5 text-sm text-graphite">
                     <span className="flex items-center gap-3 font-medium text-ink">
                       <VisualCue icon="upload" label="FILE" tone="bg-white text-ink" />
                       <span>Upload file</span>
@@ -668,28 +745,101 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                     {fileName ? <span className="mt-3 block text-ink">{fileName}</span> : null}
                   </label>
                 ) : null}
+                {designMode === "template" ? (
+                  <div className="mt-4 border border-ink/10 bg-mist">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-semibold text-ink">{product.name} templates</p>
+                        <p className="mt-1 text-xs font-semibold text-graphite">{articleTemplates.length} available</p>
+                      </div>
+                      {selectedTemplate ? (
+                        <a className="border border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:border-[var(--action)]" href={`/customize/${selectedTemplate.slug}`}>
+                          Edit selected
+                        </a>
+                      ) : null}
+                    </div>
+
+                    {articleTemplates.length ? (
+                      <div className="grid max-h-80 overflow-y-auto">
+                        {articleTemplates.map((template) => {
+                          const active = selectedTemplateId === template.id;
+
+                          return (
+                            <div
+                              className={[
+                                "grid gap-3 border-b border-ink/10 px-4 py-3 last:border-b-0 sm:grid-cols-[1.25rem_4.5rem_minmax(0,1fr)_auto] sm:items-center",
+                                active ? "bg-[var(--action-soft)]" : "bg-white"
+                              ].join(" ")}
+                              key={template.id}
+                            >
+                              <span
+                                aria-hidden="true"
+                                className={[
+                                  "mt-1 flex h-5 w-5 items-center justify-center rounded-full border bg-[var(--surface)] sm:mt-0",
+                                  active ? "border-[var(--action)]" : "border-graphite"
+                                ].join(" ")}
+                              >
+                                {active ? <span className="h-2.5 w-2.5 rounded-full bg-[var(--action)]" /> : null}
+                              </span>
+                              <span
+                                aria-hidden="true"
+                                className="block aspect-[4/3] border border-ink/10 bg-mist bg-cover bg-center"
+                                style={{ backgroundImage: template.thumbnail_url ? `url(${template.thumbnail_url})` : undefined }}
+                              />
+                              <span className="min-w-0">
+                                <span className="block text-sm font-black text-ink">{template.title}</span>
+                                <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.08em] text-graphite">
+                                  {template.category ?? "Template"}
+                                </span>
+                              </span>
+                              <span className="flex flex-wrap gap-2">
+                                <button
+                                  className="border border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:border-[var(--action)]"
+                                  onClick={() => setSelectedTemplateId(template.id)}
+                                  type="button"
+                                >
+                                  {active ? "Selected" : "Choose"}
+                                </button>
+                                <a
+                                  className="border border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:border-[var(--action)]"
+                                  href={`/customize/${template.slug}`}
+                                >
+                                  Edit
+                                </a>
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-5 text-sm font-semibold text-graphite">
+                        No templates are available for {product.name} yet.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </section>
             </div>
           ) : null}
 
           {step === 3 ? (
-            <div className="grid gap-7">
+            <div className="order-step-pane grid gap-7">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">Customer and fulfillment</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-graphite">Customer and fulfillment</p>
                 <h2 className="mt-3 text-3xl font-semibold text-ink">Pickup or delivery?</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <label className="grid gap-2 text-sm font-medium text-ink">
                   Name
-                  <input className="min-h-12 rounded-full border border-black/10 px-4 outline-none focus:border-black/30" onChange={(event) => setCustomer((value) => ({ ...value, name: event.target.value }))} placeholder="Customer name" value={customer.name} />
+                  <input className="atelier-input min-h-12 px-4 outline-none" onChange={(event) => setCustomer((value) => ({ ...value, name: event.target.value }))} placeholder="Customer name" value={customer.name} />
                 </label>
                 <label className="grid gap-2 text-sm font-medium text-ink">
                   Phone
-                  <input className="min-h-12 rounded-full border border-black/10 px-4 outline-none focus:border-black/30" onChange={(event) => setCustomer((value) => ({ ...value, phone: event.target.value }))} placeholder="+977" value={customer.phone} />
+                  <input className="atelier-input min-h-12 px-4 outline-none" onChange={(event) => setCustomer((value) => ({ ...value, phone: event.target.value }))} placeholder="+977" value={customer.phone} />
                 </label>
                 <label className="grid gap-2 text-sm font-medium text-ink">
                   Email
-                  <input className="min-h-12 rounded-full border border-black/10 px-4 outline-none focus:border-black/30" onChange={(event) => setCustomer((value) => ({ ...value, email: event.target.value }))} placeholder="Optional" type="email" value={customer.email} />
+                  <input className="atelier-input min-h-12 px-4 outline-none" onChange={(event) => setCustomer((value) => ({ ...value, email: event.target.value }))} placeholder="Optional" type="email" value={customer.email} />
                 </label>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -713,13 +863,13 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                   <label className="grid gap-2 text-sm font-medium text-ink">
                     Delivery location
                     <textarea
-                      className="min-h-28 rounded-2xl border border-black/10 p-4 outline-none focus:border-black/30"
+                      className="atelier-input min-h-28 p-4 outline-none"
                       onChange={(event) => setLocation(event.target.value)}
                       placeholder="Street, landmark, city"
                       value={location}
                     />
                   </label>
-                  <button className="flex min-h-11 w-fit items-center gap-3 rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-ink" onClick={useMyLocation} type="button">
+                  <button className="flex min-h-11 w-fit items-center gap-3 border border-ink/10 bg-white px-4 text-sm font-medium text-ink hover:border-[var(--action)]" onClick={useMyLocation} type="button">
                     <VisualCue icon="gps" label="GPS" size="sm" tone="bg-sky-100 text-sky-950" />
                     <span>Use current location</span>
                   </button>
@@ -730,9 +880,9 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
           ) : null}
 
           {step === 4 ? (
-            <div className="grid gap-7">
+            <div className="order-step-pane grid gap-7">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">Payment</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-graphite">Payment</p>
                 <h2 className="mt-3 text-3xl font-semibold text-ink">Choose payment method.</h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -747,7 +897,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                   />
                 ))}
               </div>
-              <div className="rounded-xl border border-black/10 bg-mist p-4">
+              <div className="border border-ink/10 bg-mist p-4">
                 <p className="text-sm font-semibold text-ink">Amount payable</p>
                 <p className="mt-2 text-4xl font-semibold text-ink">{currency(grandTotal)}</p>
                 <p className="mt-2 text-sm text-graphite">Demo payment creates a receipt immediately.</p>
@@ -756,14 +906,14 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
           ) : null}
 
           {step === 5 && receipt ? (
-            <div className="grid gap-6">
+            <div className="order-step-pane grid gap-6">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-graphite">Receipt</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-graphite">Receipt</p>
                 <h2 className="mt-3 text-3xl font-semibold text-ink">Order placed.</h2>
               </div>
-              <div className="grid gap-4 rounded-xl border border-black/10 bg-mist p-5">
+              <div className="grid gap-4 border border-ink/10 bg-mist p-5">
                 <div className="grid gap-1">
-                  <span className="text-xs uppercase tracking-[0.18em] text-graphite">Order ID</span>
+                  <span className="text-xs uppercase tracking-[0.08em] text-graphite">Order ID</span>
                   <span className="font-mono text-lg font-semibold text-ink">{receipt.id}</span>
                 </div>
                 <div className="grid gap-2 text-sm text-graphite sm:grid-cols-2">
@@ -774,18 +924,18 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
-                <div className="w-fit rounded-xl border border-black/10 bg-white p-3">
+                <div className="w-fit border border-ink/10 bg-white p-3">
                   <QRCode size={128} value={receipt.whatsappLink} />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-ink">WhatsApp contact</h3>
                   <p className="mt-2 text-sm leading-6 text-graphite">Scan the QR or open WhatsApp to continue with file checks, delivery updates, and production confirmation.</p>
-                  <a className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--solid)] px-5 text-sm font-medium text-[var(--solid-text)]" href={receipt.whatsappLink} rel="noreferrer" target="_blank">
+                  <a className="link-block mt-4" href={receipt.whatsappLink} rel="noreferrer" target="_blank">
                     Open WhatsApp
                   </a>
                 </div>
               </div>
-              <button className="min-h-12 w-fit rounded-full border border-black/10 bg-white px-6 text-sm font-medium text-ink" onClick={() => {
+              <button className="min-h-12 w-fit border border-ink/10 bg-white px-6 text-sm font-medium text-ink hover:border-[var(--action)]" onClick={() => {
                 setReceipt(null);
                 setHasSelectedProduct(false);
                 setStep(0);
@@ -797,39 +947,58 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
         </div>
 
         {hasSelectedProduct ? (
-        <aside className="border-t border-ink/10 bg-mist p-5 lg:border-l lg:border-t-0 sm:p-6">
-          <div className="sticky top-24 grid gap-5">
-            <div>
+        <aside className="border-l border-ink/10 bg-mist p-5 sm:p-6">
+          <div className="sticky top-24 grid gap-0 border border-ink/10 bg-white">
+            <div className="border-b border-ink/10 p-5">
               <p className="eyebrow">Live quote</p>
-              <h2 className="mt-3 text-3xl font-black text-ink">{currency(grandTotal)}</h2>
-              <p className="mt-2 text-sm text-graphite">{currency(unitPrice)} per {product.unit}</p>
+              <h2 className="mt-3 text-4xl font-black text-press">{currency(grandTotal)}</h2>
+              <p className="mt-2 text-sm text-graphite">{grandTotal > 0 ? `${currency(unitPrice)} per ${product.unit}` : "Complete required details to calculate."}</p>
             </div>
-            <div className="grid gap-3 text-sm">
-              {quoteRows.map(([label, value]) => (
-                <div className="flex items-start justify-between gap-4 border-b border-black/10 pb-3 last:border-b-0" key={label}>
-                  <span className="text-graphite">{label}</span>
-                  <span className="text-right font-medium text-ink">{value}</span>
+
+            <div className="border-b border-ink/10 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-graphite">Product</p>
+              <p className="mt-3 text-base font-black text-ink">{product.name}</p>
+              <p className="mt-1 text-sm text-graphite">{product.category}</p>
+              <button className="mt-4 border border-ink/10 bg-mist px-4 py-2 text-sm font-bold text-graphite transition hover:border-[var(--action)] hover:text-ink" onClick={() => setStep(0)} type="button">
+                Change product
+              </button>
+            </div>
+
+            <div className="border-b border-ink/10 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-graphite">Required fields</p>
+              <div className="mt-3 grid gap-2">
+                {requiredRows.map(([label, done]) => (
+                  <div className="flex items-center justify-between gap-3 border border-ink/10 bg-mist px-3 py-2 text-sm" key={label}>
+                    <span className="font-medium text-ink">{label}</span>
+                    <span className={["border px-2 py-1 text-xs font-bold", done ? "border-emerald-800/20 bg-[var(--sage-soft)] text-emerald-800" : "border-ink/10 bg-white text-graphite"].join(" ")}>
+                      {done ? "Done" : "Needed"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-b border-ink/10 p-4 text-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-graphite">Receipt</p>
+              <div className="mt-3 grid gap-2">
+                <div className="flex justify-between gap-3">
+                  <span className="text-graphite">Print</span>
+                  <span className="font-medium text-ink">{currency(printSubtotal)}</span>
                 </div>
-              ))}
-            </div>
-            <div className="grid gap-2 rounded-xl border border-black/10 bg-white p-4 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-graphite">Print subtotal</span>
-                <span className="font-medium text-ink">{currency(printSubtotal)}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-graphite">Design</span>
-                <span className="font-medium text-ink">{currency(designCharge)}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-graphite">Delivery</span>
-                <span className="font-medium text-ink">{currency(deliveryFee)}</span>
+                <div className="flex justify-between gap-3">
+                  <span className="text-graphite">Design</span>
+                  <span className="font-medium text-ink">{currency(designCharge)}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-graphite">Delivery</span>
+                  <span className="font-medium text-ink">{currency(deliveryFee)}</span>
+                </div>
               </div>
             </div>
             {step < 5 ? (
-              <div className="flex gap-3">
+              <div className="flex gap-3 p-4">
                 <button
-                  className="min-h-12 flex-1 rounded-full border border-black/10 bg-white px-5 text-sm font-medium text-ink disabled:opacity-40"
+                  className="min-h-12 flex-1 border border-ink/10 bg-white px-5 text-sm font-medium text-ink disabled:opacity-40"
                   disabled={step === 0}
                   onClick={() => setStep((value) => Math.max(0, value - 1))}
                   type="button"
@@ -838,7 +1007,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 </button>
                 {step < 4 ? (
                   <button
-                    className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--solid)] px-5 text-sm font-medium text-[var(--solid-text)]"
+                    className="link-block flex-1 justify-center disabled:opacity-40"
                     disabled={!canContinue}
                     onClick={() => setStep((value) => Math.min(4, value + 1))}
                     type="button"
@@ -847,7 +1016,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                   </button>
                 ) : (
                   <button
-                    className="min-h-12 flex-1 rounded-full bg-[var(--solid)] px-5 text-sm font-medium text-[var(--solid-text)] disabled:bg-neutral-400"
+                    className="link-block flex-1 justify-center disabled:opacity-40"
                     disabled={!canPlaceOrder}
                     onClick={placeOrder}
                     type="button"

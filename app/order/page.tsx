@@ -18,7 +18,7 @@ export default function OrderPage({
     <main>
       <Header />
       <section className="order-flow-stage">
-        <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
+        <div className="mx-auto max-w-[1280px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
           <OrderForm initialProductId={searchParams?.product} />
         </div>
       </section>

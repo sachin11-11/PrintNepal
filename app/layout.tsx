@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Toast } from "@/components/Toast";
-import "polotno/polotno.blueprint.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,8 +21,7 @@ export default function RootLayout({
             __html: `
               try {
                 const savedTheme = localStorage.getItem("printnepal-theme");
-                const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "light";
-                document.documentElement.dataset.theme = savedTheme === "night" || savedTheme === "light" ? savedTheme : preferredTheme;
+                document.documentElement.dataset.theme = savedTheme === "night" || savedTheme === "light" ? savedTheme : "light";
               } catch {}
             `
           }}

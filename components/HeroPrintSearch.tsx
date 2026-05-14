@@ -4,8 +4,6 @@ import { FormEvent, useMemo, useState } from "react";
 import { ArrowIcon, SearchIcon } from "./Icons";
 import { printCatalog } from "@/lib/print-order-catalog";
 
-const suggestions = ["Business Card", "Wedding Card", "Vinyl Sticker", "ID Card", "Brochure"];
-
 function orderHref(productId: string) {
   return `/order?product=${encodeURIComponent(productId)}`;
 }
@@ -91,19 +89,6 @@ export function HeroPrintSearch() {
         </div>
         ) : null}
       </form>
-
-      <div className="mt-5 flex flex-wrap gap-3" aria-label="Popular print searches">
-        {suggestions.map((suggestion) => (
-          <button
-            className="border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white/80 backdrop-blur transition hover:border-white/40 hover:bg-white/20 hover:text-white"
-            key={suggestion}
-            onClick={() => setQuery(suggestion)}
-            type="button"
-          >
-            {suggestion}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

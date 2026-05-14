@@ -30,8 +30,7 @@ export function ThemeSwitcher() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("printnepal-theme");
-    const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "light";
-    const nextTheme = savedTheme === "night" || savedTheme === "light" ? savedTheme : preferredTheme;
+    const nextTheme = savedTheme === "night" || savedTheme === "light" ? savedTheme : "light";
 
     setTheme(nextTheme);
     document.documentElement.dataset.theme = nextTheme;
@@ -46,7 +45,7 @@ export function ThemeSwitcher() {
   return (
     <button
       aria-label={`Switch to ${theme === "night" ? "light" : "night"} theme`}
-      className="inline-flex min-h-11 items-center gap-2 border border-ink/20 bg-[var(--surface)] px-3 text-sm font-black text-ink transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-soft"
+      className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--surface)] px-3 text-sm font-black text-ink shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift"
       onClick={toggleTheme}
       title={`Switch to ${theme === "night" ? "light" : "night"} theme`}
       type="button"
