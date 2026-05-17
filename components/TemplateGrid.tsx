@@ -42,21 +42,15 @@ export function TemplateGrid({ templates }: { templates: ProductTemplateWithServ
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)]">
       <div className="grid content-start gap-4 md:grid-cols-2">
-        {templates.map((template) => {
-          const isActive = activeTemplate?.id === template.id;
-
-          return (
+        {templates.map((template) => (
             <article
               key={template.id}
-              className={`group overflow-hidden rounded-lg bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                isActive ? "ring-2 ring-cyan ring-offset-2 ring-offset-[#f7f3ec]" : ""
-              }`}
+              className="group overflow-hidden rounded-lg bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
               onMouseEnter={() => setActiveTemplateId(template.id)}
             >
               <button
                 type="button"
                 className="block aspect-[4/3] w-full overflow-hidden bg-mist text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan"
-                aria-pressed={isActive}
                 aria-label={`Preview ${template.title}`}
                 onClick={() => setActiveTemplateId(template.id)}
                 onFocus={() => setActiveTemplateId(template.id)}
@@ -82,8 +76,7 @@ export function TemplateGrid({ templates }: { templates: ProductTemplateWithServ
                 </Link>
               </div>
             </article>
-          );
-        })}
+        ))}
       </div>
 
       {activeTemplate ? (

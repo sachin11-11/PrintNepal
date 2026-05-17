@@ -1,6 +1,11 @@
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export async function getAdminToken() {
+  if (typeof window !== "undefined") {
+    const localToken = window.localStorage.getItem("printnepal-admin-token");
+    if (localToken) return localToken;
+  }
+
   const supabase = createBrowserSupabaseClient();
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? null;
@@ -23,10 +28,19 @@ export async function adminFetch(path: string, init?: RequestInit) {
     }
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const responseText = await response.text();
+  const payload = responseText
+    ? (() => {
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return {};
+        }
+      })()
+    : {};
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Admin request failed.");
+    throw new Error(payload.error ?? responseText ?? `Admin request failed with status ${response.status}.`);
   }
 
   return payload;

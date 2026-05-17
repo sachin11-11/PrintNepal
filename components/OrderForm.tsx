@@ -363,7 +363,6 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const [quantity, setQuantity] = useState<QuantityValue>("");
   const [designMode, setDesignMode] = useState<DesignMode | "">("");
   const [fileName, setFileName] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [fulfillment, setFulfillment] = useState<FulfillmentMode | "">("");
   const [areaId, setAreaId] = useState("");
   const [location, setLocation] = useState("");
@@ -383,7 +382,6 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     const categories = templateCategoriesForProduct(product);
     return LOCAL_TEMPLATE_CATALOG.filter((template) => template.category && categories.includes(template.category));
   }, [product]);
-  const selectedTemplate = articleTemplates.find((template) => template.id === selectedTemplateId);
   const selectedArea = fulfillment === "pickup"
     ? deliveryAreas.find((area) => area.id === "pickup")
     : deliveryAreas.find((area) => area.id === areaId);
@@ -400,7 +398,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
   const designComplete = Boolean(
     quantityIsValid &&
     designMode &&
-    (designMode === "upload" ? fileName : designMode === "template" ? selectedTemplate : true)
+    (designMode === "upload" ? fileName : designMode === "template" ? false : true)
   );
   const fulfillmentComplete = Boolean(
     customer.name.trim() &&
@@ -439,7 +437,6 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
     setFinishingId("");
     setDesignMode("");
     setFileName("");
-    setSelectedTemplateId("");
     setFulfillment("");
     setAreaId("");
     setLocation("");
@@ -722,12 +719,10 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <OptionButton active={designMode === "upload"} label="Upload my design" meta="Included" onClick={() => {
                     setDesignMode("upload");
-                    setSelectedTemplateId("");
                   }} visual={designVisuals.upload} />
                   <OptionButton active={designMode === "template"} label="Use template" meta="+ NPR 250" onClick={() => setDesignMode("template")} visual={designVisuals.template} />
                   <OptionButton active={designMode === "help"} label="Need design help" meta="+ NPR 750" onClick={() => {
                     setDesignMode("help");
-                    setSelectedTemplateId("");
                   }} visual={designVisuals.help} />
                 </div>
                 {designMode === "upload" ? (
@@ -750,37 +745,17 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 px-4 py-3">
                       <div>
                         <p className="text-sm font-semibold text-ink">{product.name} templates</p>
-                        <p className="mt-1 text-xs font-semibold text-graphite">{articleTemplates.length} available</p>
+                        <p className="mt-1 text-xs font-semibold text-graphite">Open a template in the editor to complete custom fields and uploads.</p>
                       </div>
-                      {selectedTemplate ? (
-                        <a className="border border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:border-[var(--action)]" href={`/customize/${selectedTemplate.slug}`}>
-                          Edit selected
-                        </a>
-                      ) : null}
                     </div>
 
                     {articleTemplates.length ? (
                       <div className="grid max-h-80 overflow-y-auto">
-                        {articleTemplates.map((template) => {
-                          const active = selectedTemplateId === template.id;
-
-                          return (
+                        {articleTemplates.map((template) => (
                             <div
-                              className={[
-                                "grid gap-3 border-b border-ink/10 px-4 py-3 last:border-b-0 sm:grid-cols-[1.25rem_4.5rem_minmax(0,1fr)_auto] sm:items-center",
-                                active ? "bg-[var(--action-soft)]" : "bg-white"
-                              ].join(" ")}
+                              className="grid gap-3 border-b border-ink/10 bg-white px-4 py-3 last:border-b-0 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] sm:items-center"
                               key={template.id}
                             >
-                              <span
-                                aria-hidden="true"
-                                className={[
-                                  "mt-1 flex h-5 w-5 items-center justify-center rounded-full border bg-[var(--surface)] sm:mt-0",
-                                  active ? "border-[var(--action)]" : "border-graphite"
-                                ].join(" ")}
-                              >
-                                {active ? <span className="h-2.5 w-2.5 rounded-full bg-[var(--action)]" /> : null}
-                              </span>
                               <span
                                 aria-hidden="true"
                                 className="block aspect-[4/3] border border-ink/10 bg-mist bg-cover bg-center"
@@ -793,13 +768,6 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                                 </span>
                               </span>
                               <span className="flex flex-wrap gap-2">
-                                <button
-                                  className="border border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:border-[var(--action)]"
-                                  onClick={() => setSelectedTemplateId(template.id)}
-                                  type="button"
-                                >
-                                  {active ? "Selected" : "Choose"}
-                                </button>
                                 <a
                                   className="border border-ink/15 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:border-[var(--action)]"
                                   href={`/customize/${template.slug}`}
@@ -808,8 +776,7 @@ export function OrderForm({ initialProductId }: { initialProductId?: string }) {
                                 </a>
                               </span>
                             </div>
-                          );
-                        })}
+                        ))}
                       </div>
                     ) : (
                       <div className="px-4 py-5 text-sm font-semibold text-graphite">

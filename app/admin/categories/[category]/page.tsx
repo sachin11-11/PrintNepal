@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdminButton, AdminPageHeader, AdminPanel } from "@/components/AdminUI";
 import { TemplateLayerPreview } from "@/components/TemplateLayerPreview";
 import type { TemplateEditorValue } from "@/components/TemplateEditor";
 import { LOCAL_TEMPLATE_CATALOG } from "@/lib/templates/catalog";
@@ -14,39 +15,33 @@ export default function AdminCategoryDetailPage({ params }: { params: { category
   const templates = LOCAL_TEMPLATE_CATALOG.filter((template) => template.category === category);
 
   return (
-    <section className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="border-l-4 border-press bg-white/80 p-5">
-          <p className="eyebrow">{category}</p>
-          <h1 className="mt-4 text-5xl font-black text-ink">{TEMPLATE_CATEGORY_LABELS[category]}</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-graphite">
-            This page shows the specific templates in the category. Pick one to edit or customize.
-          </p>
-        </div>
-        <Link className="border border-black/10 bg-white px-4 py-2 text-sm font-bold text-ink" href="/admin/categories">
-          Back to categories
-        </Link>
-      </div>
+    <section className="grid gap-5">
+      <AdminPageHeader
+        action={<AdminButton href="/admin/categories" variant="secondary">Back to categories</AdminButton>}
+        description="Inspect the specific templates in this category and jump into the customer preview or editor."
+        eyebrow={category}
+        title={TEMPLATE_CATEGORY_LABELS[category]}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {templates.map((template) => (
-          <article key={template.id} className="overflow-hidden border border-ink/10 bg-white shadow-sm">
+          <AdminPanel key={template.id} className="overflow-hidden">
             <div className="aspect-[4/3] border-b border-ink/10 bg-mist">
               <TemplateLayerPreview isPreviewMode template={template.template_json as TemplateEditorValue} />
             </div>
             <div className="p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-press">{template.id}</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.08em] text-press">{template.id}</p>
               <h2 className="mt-2 text-lg font-black text-ink">{template.title}</h2>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Link className="border border-black/10 px-4 py-2 text-sm font-bold text-ink" href={`/templates/${template.id}`}>
+                <Link className="inline-flex min-h-10 items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-black text-ink transition hover:border-press" href={`/templates/${template.id}`}>
                   View
                 </Link>
-                <Link className="border border-black/10 px-4 py-2 text-sm font-bold text-ink" href={`/customize/${template.id}`}>
+                <Link className="inline-flex min-h-10 items-center rounded-lg bg-press px-4 text-sm font-black text-white transition hover:bg-press/90" href={`/customize/${template.id}`}>
                   Customize
                 </Link>
               </div>
             </div>
-          </article>
+          </AdminPanel>
         ))}
       </div>
     </section>

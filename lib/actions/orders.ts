@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { customerUploadPath } from "@/lib/file-paths";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import type { OrderRow } from "@/lib/supabase/types";
 import { orderSchema, trackOrderSchema } from "@/lib/validations/order";
@@ -73,13 +74,12 @@ export async function createOrderAction(
   const supabase = createAdminSupabaseClient();
   let designFileUrl: string | null = null;
   const file = formData.get("design_file");
-  let createdOrderId: string | null = null;
+  const createdOrderId = crypto.randomUUID();
 
   try {
     if (file instanceof File && file.size > 0) {
       await ensureDesignBucket();
-      const extension = file.name.split(".").pop() || "upload";
-      const path = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+      const path = customerUploadPath(createdOrderId, parsed.data.customer_name, file.name);
       const { error: uploadError } = await supabase.storage
         .from(DESIGN_BUCKET)
         .upload(path, file, {
@@ -97,6 +97,7 @@ export async function createOrderAction(
     const { data, error } = await supabase
       .from("orders")
       .insert({
+        id: createdOrderId,
         ...parsed.data,
         selected_design_id: parsed.data.selected_design_id || null,
         design_file_url: designFileUrl,
@@ -109,7 +110,6 @@ export async function createOrderAction(
       throw error;
     }
 
-    createdOrderId = data.id;
     const { data: service } = data.service_id
       ? await supabase.from("services").select("title").eq("id", data.service_id).maybeSingle()
       : { data: null };

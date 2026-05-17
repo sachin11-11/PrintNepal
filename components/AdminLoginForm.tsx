@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("printshopnepal@gmail.com");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,20 +13,24 @@ export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
     setIsLoading(true);
     setError("");
 
-    const supabase = createBrowserSupabaseClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
+    const response = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
     });
+    const payload = await response.json().catch(() => ({}));
 
     setIsLoading(false);
 
-    if (signInError) {
-      setError(signInError.message);
+    if (!response.ok) {
+      setError(payload.error ?? "Could not sign in.");
       return;
     }
 
-    document.cookie = `printnepal-admin-session=1; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
+    if (payload.token) {
+      window.localStorage.setItem("printnepal-admin-token", payload.token);
+    }
+
     window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: "Signed in." }));
     window.location.assign(nextPath ?? "/admin/dashboard");
   }
@@ -38,10 +39,10 @@ export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
     <form className="print-panel w-full p-6 sm:p-8" onSubmit={handleSubmit}>
       <p className="eyebrow">Admin</p>
       <h1 className="mt-4 text-4xl font-black text-ink">Sign in.</h1>
-      <p className="mt-3 text-sm leading-6 text-graphite">Use a Supabase Auth user with admin access.</p>
+      <p className="mt-3 text-sm leading-6 text-graphite">Use the PrintNepal admin credentials.</p>
       <label className="mt-8 grid gap-2 text-sm font-medium text-ink">
         Email
-        <input className="atelier-input min-h-12 px-4 outline-none" onChange={(event) => setEmail(event.target.value)} placeholder="admin@printnepal.com" required type="email" value={email} />
+        <input className="atelier-input min-h-12 px-4 outline-none" onChange={(event) => setEmail(event.target.value)} placeholder="printshopnepal@gmail.com" required type="email" value={email} />
       </label>
       <label className="mt-5 grid gap-2 text-sm font-medium text-ink">
         Password

@@ -1,7 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AdminButton,
+  AdminEmptyState,
+  AdminError,
+  AdminField,
+  AdminPageHeader,
+  AdminPanel,
+  AdminToolbar,
+  adminInputClass,
+  adminTextareaClass,
+  cx
+} from "@/components/AdminUI";
 import { adminFetch } from "@/lib/admin-client";
 import type { MaterialRow, ServiceRow } from "@/types/database";
 
@@ -18,6 +30,15 @@ type ServiceFormState = {
   is_featured: boolean;
 };
 
+type MaterialFormState = {
+  name: string;
+  type: string;
+  size: string;
+  finish: string;
+  price_modifier: string;
+  description: string;
+};
+
 const emptyServiceForm: ServiceFormState = {
   title: "",
   slug: "",
@@ -28,6 +49,52 @@ const emptyServiceForm: ServiceFormState = {
   specifications: "",
   is_featured: false
 };
+
+const emptyMaterialForm: MaterialFormState = {
+  name: "",
+  type: "",
+  size: "",
+  finish: "",
+  price_modifier: "",
+  description: ""
+};
+
+const servicePresets = [
+  {
+    label: "ID cards",
+    title: "Student ID Cards",
+    category: "Cards",
+    base_price: "120",
+    description: "PVC and laminated identity cards with editable photo, logo, and student fields.",
+    specifications: "Size: ID Card\nMaterial: PVC or laminated card\nDesign: Editable template required\nDelivery: Pickup or local delivery"
+  },
+  {
+    label: "Business cards",
+    title: "Business Cards",
+    category: "Business Stationery",
+    base_price: "8",
+    description: "Professional visiting cards for business owners, teams, and offices.",
+    specifications: "Size: 3.5 x 2 inch\nPaper: 300-350gsm\nFinish: Matte, gloss, or round corners\nDesign: Upload, template, or design help"
+  },
+  {
+    label: "Flyers",
+    title: "Flyers and Posters",
+    category: "Marketing",
+    base_price: "35",
+    description: "Marketing flyers, handouts, posters, and announcement prints.",
+    specifications: "Sizes: A5, A4, A3\nPaper: 130-250gsm\nFinish: Standard or gloss\nDesign: Upload or request design help"
+  }
+];
+
+const materialPresets = [
+  { label: "Art paper", name: "170gsm Art Paper", type: "Paper", size: "A4/A3", finish: "Standard", price_modifier: "10" },
+  { label: "Cardstock", name: "350gsm Matte Card", type: "Card", size: "Business/Custom", finish: "Matte", price_modifier: "32" },
+  { label: "Vinyl", name: "Gloss Sticker Vinyl", type: "Sticker", size: "Custom", finish: "Gloss", price_modifier: "24" }
+];
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 
 function serviceToForm(item: ServiceRow): ServiceFormState {
   return {
@@ -42,12 +109,25 @@ function serviceToForm(item: ServiceRow): ServiceFormState {
   };
 }
 
+function materialToForm(item: MaterialRow): MaterialFormState {
+  return {
+    name: item.name,
+    type: item.type ?? "",
+    size: item.size ?? "",
+    finish: item.finish ?? "",
+    price_modifier: String(item.price_modifier),
+    description: item.description ?? ""
+  };
+}
+
 export function AdminCatalogManager({ type }: { type: CatalogType }) {
   const [items, setItems] = useState<Array<ServiceRow | MaterialRow>>([]);
+  const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [serviceForm, setServiceForm] = useState<ServiceFormState>(emptyServiceForm);
+  const [materialForm, setMaterialForm] = useState<MaterialFormState>(emptyMaterialForm);
   const [error, setError] = useState("");
 
   async function loadItems() {
@@ -65,14 +145,27 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
   }
 
   useEffect(() => {
+    setEditingId(null);
+    setServiceForm(emptyServiceForm);
+    setMaterialForm(emptyMaterialForm);
     loadItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
+  const visibleItems = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return items;
+
+    return items.filter((item) => {
+      const text = "title" in item
+        ? [item.title, item.slug, item.category, item.description, item.specifications].join(" ")
+        : [item.name, item.type, item.size, item.finish, item.description].join(" ");
+      return text.toLowerCase().includes(normalized);
+    });
+  }, [items, query]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const raw = Object.fromEntries(formData.entries());
     const payload =
       type === "services"
         ? {
@@ -85,25 +178,18 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
             base_price: serviceForm.base_price,
             is_featured: serviceForm.is_featured
           }
-        : {
-            name: raw.name,
-            type: raw.type,
-            size: raw.size,
-            finish: raw.finish,
-            price_modifier: raw.price_modifier,
-            description: raw.description
-          };
+        : materialForm;
 
     try {
       setIsSaving(true);
-      await adminFetch(editingServiceId ? `/api/admin/${type}/${editingServiceId}` : `/api/admin/${type}`, {
-        method: editingServiceId ? "PATCH" : "POST",
+      await adminFetch(editingId ? `/api/admin/${type}/${editingId}` : `/api/admin/${type}`, {
+        method: editingId ? "PATCH" : "POST",
         body: JSON.stringify(payload)
       });
-      event.currentTarget.reset();
-      setEditingServiceId(null);
+      setEditingId(null);
       setServiceForm(emptyServiceForm);
-      window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: `${type === "services" ? "Service" : "Material"} ${editingServiceId ? "updated" : "added"}.` }));
+      setMaterialForm(emptyMaterialForm);
+      window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: `${type === "services" ? "Service" : "Material"} ${editingId ? "updated" : "added"}.` }));
       await loadItems();
     } catch (submitError) {
       window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: submitError instanceof Error ? submitError.message : "Could not save item." }));
@@ -138,130 +224,202 @@ export function AdminCatalogManager({ type }: { type: CatalogType }) {
     }
   }
 
-  async function editItem(item: ServiceRow | MaterialRow) {
+  function editItem(item: ServiceRow | MaterialRow) {
+    setEditingId(item.id);
     if ("title" in item) {
-      setEditingServiceId(item.id);
       setServiceForm(serviceToForm(item));
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+    } else {
+      setMaterialForm(materialToForm(item));
     }
-
-    const currentName = item.name;
-    const nextName = window.prompt("Update name", currentName);
-
-    if (!nextName || nextName === currentName) {
-      return;
-    }
-
-    const payload = "title" in item ? { title: nextName } : { name: nextName };
-
-    try {
-      await adminFetch(`/api/admin/${type}/${item.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload)
-      });
-      window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: "Updated." }));
-      await loadItems();
-    } catch (editError) {
-      window.dispatchEvent(new CustomEvent("printnepal:toast", { detail: editError instanceof Error ? editError.message : "Could not update item." }));
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function clearEdit() {
+    setEditingId(null);
+    setServiceForm(emptyServiceForm);
+    setMaterialForm(emptyMaterialForm);
+  }
+
+  function applyServicePreset(preset: (typeof servicePresets)[number]) {
+    setEditingId(null);
+    setServiceForm({
+      title: preset.title,
+      slug: slugify(preset.title),
+      category: preset.category,
+      base_price: preset.base_price,
+      image_url: "",
+      description: preset.description,
+      specifications: preset.specifications,
+      is_featured: true
+    });
+  }
+
+  function applyMaterialPreset(preset: (typeof materialPresets)[number]) {
+    setEditingId(null);
+    setMaterialForm({
+      name: preset.name,
+      type: preset.type,
+      size: preset.size,
+      finish: preset.finish,
+      price_modifier: preset.price_modifier,
+      description: ""
+    });
+  }
+
+  const isServices = type === "services";
+  const pageTitle = isServices ? "Service catalog" : "Material library";
+  const description = isServices
+    ? "Manage the customer-facing print products, base prices, specs, featured state, and images."
+    : "Manage paper, stock, finish, size, and pricing modifiers used by the print shop.";
+
   return (
-    <section>
-      <div className="border-l-4 border-press bg-white/80 p-5">
-        <p className="eyebrow">{type}</p>
-        <h1 className="mt-4 text-5xl font-black text-ink">{type === "services" ? "Add services." : "Material library."}</h1>
+    <section className="grid gap-5">
+      <AdminPageHeader description={description} eyebrow={isServices ? "Services" : "Materials"} title={pageTitle} />
+
+      <AdminError message={error} />
+
+      <div className="grid gap-5 xl:grid-cols-[1fr_24rem]">
+        <AdminPanel className="p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.08em] text-press">{editingId ? "Editing item" : "Create item"}</p>
+              <h2 className="mt-2 text-xl font-black text-ink">{editingId ? "Update catalog record" : isServices ? "Add service" : "Add material"}</h2>
+            </div>
+            {editingId ? <AdminButton onClick={clearEdit} variant="secondary">Cancel edit</AdminButton> : null}
+          </div>
+
+          <form className="mt-5 grid gap-4 lg:grid-cols-3" onSubmit={handleSubmit}>
+            {isServices ? (
+              <>
+                <AdminField label="Product title">
+                  <input className={adminInputClass} onChange={(event) => setServiceForm((current) => ({ ...current, title: event.target.value, slug: current.slug || slugify(event.target.value) }))} required value={serviceForm.title} />
+                </AdminField>
+                <AdminField label="Slug">
+                  <input className={adminInputClass} onChange={(event) => setServiceForm((current) => ({ ...current, slug: event.target.value }))} required value={serviceForm.slug} />
+                </AdminField>
+                <AdminField label="Category">
+                  <input className={adminInputClass} onChange={(event) => setServiceForm((current) => ({ ...current, category: event.target.value }))} value={serviceForm.category} />
+                </AdminField>
+                <AdminField label="Base price">
+                  <input className={adminInputClass} min="0" onChange={(event) => setServiceForm((current) => ({ ...current, base_price: event.target.value }))} required type="number" value={serviceForm.base_price} />
+                </AdminField>
+                <AdminField className="lg:col-span-2" label="Image URL">
+                  <input className={adminInputClass} onChange={(event) => setServiceForm((current) => ({ ...current, image_url: event.target.value }))} value={serviceForm.image_url} />
+                </AdminField>
+                <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--line)] bg-mist px-4 text-sm font-black text-ink transition hover:border-press">
+                  Upload image
+                  <input accept="image/*" className="sr-only" onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) uploadProductImage(file);
+                  }} type="file" />
+                </label>
+                <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-bold text-ink">
+                  <input checked={serviceForm.is_featured} onChange={(event) => setServiceForm((current) => ({ ...current, is_featured: event.target.checked }))} type="checkbox" />
+                  Featured on storefront
+                </label>
+                {serviceForm.image_url ? (
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-lg border border-[var(--line)] bg-mist lg:col-span-3">
+                    <Image alt="Product preview" className="h-full w-full object-cover" fill sizes="(min-width: 1024px) 60vw, 100vw" src={serviceForm.image_url} />
+                  </div>
+                ) : null}
+                <AdminField className="lg:col-span-3" label="Description">
+                  <textarea className={adminTextareaClass} onChange={(event) => setServiceForm((current) => ({ ...current, description: event.target.value }))} value={serviceForm.description} />
+                </AdminField>
+                <AdminField className="lg:col-span-3" label="Specifications">
+                  <textarea className={cx(adminTextareaClass, "min-h-32")} onChange={(event) => setServiceForm((current) => ({ ...current, specifications: event.target.value }))} value={serviceForm.specifications} />
+                </AdminField>
+              </>
+            ) : (
+              <>
+                <AdminField label="Name">
+                  <input className={adminInputClass} onChange={(event) => setMaterialForm((current) => ({ ...current, name: event.target.value }))} required value={materialForm.name} />
+                </AdminField>
+                <AdminField label="Type">
+                  <input className={adminInputClass} onChange={(event) => setMaterialForm((current) => ({ ...current, type: event.target.value }))} value={materialForm.type} />
+                </AdminField>
+                <AdminField label="Size">
+                  <input className={adminInputClass} onChange={(event) => setMaterialForm((current) => ({ ...current, size: event.target.value }))} value={materialForm.size} />
+                </AdminField>
+                <AdminField label="Finish">
+                  <input className={adminInputClass} onChange={(event) => setMaterialForm((current) => ({ ...current, finish: event.target.value }))} value={materialForm.finish} />
+                </AdminField>
+                <AdminField label="Price modifier">
+                  <input className={adminInputClass} min="0" onChange={(event) => setMaterialForm((current) => ({ ...current, price_modifier: event.target.value }))} required type="number" value={materialForm.price_modifier} />
+                </AdminField>
+                <AdminField className="lg:col-span-3" label="Description">
+                  <textarea className={adminTextareaClass} onChange={(event) => setMaterialForm((current) => ({ ...current, description: event.target.value }))} value={materialForm.description} />
+                </AdminField>
+              </>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row lg:col-span-3">
+              <AdminButton className="flex-1" disabled={isSaving} type="submit">
+                {editingId ? "Update" : "Create"} {isServices ? "service" : "material"}
+              </AdminButton>
+              <AdminButton onClick={clearEdit} variant="secondary">Clear</AdminButton>
+            </div>
+          </form>
+        </AdminPanel>
+
+        <AdminPanel className="p-4 sm:p-5">
+          <p className="text-[11px] font-black uppercase tracking-[0.08em] text-press">Fast presets</p>
+          <h2 className="mt-2 text-xl font-black text-ink">Blueprints</h2>
+          <div className="mt-4 grid gap-3">
+            {(isServices ? servicePresets : materialPresets).map((preset) => (
+              <button
+                className="rounded-lg border border-[var(--line)] bg-mist p-3 text-left transition hover:border-press hover:bg-white"
+                key={preset.label}
+                onClick={() => isServices ? applyServicePreset(preset as (typeof servicePresets)[number]) : applyMaterialPreset(preset as (typeof materialPresets)[number])}
+                type="button"
+              >
+                <span className="text-sm font-black text-ink">{preset.label}</span>
+                <span className="mt-1 block text-xs font-semibold leading-5 text-graphite">
+                  {"category" in preset ? preset.category : preset.type} · NPR {"base_price" in preset ? preset.base_price : preset.price_modifier}
+                </span>
+              </button>
+            ))}
+          </div>
+        </AdminPanel>
       </div>
-      <form className="print-panel mt-8 grid gap-4 p-5 lg:grid-cols-3" onSubmit={handleSubmit}>
-        {type === "services" ? (
-          <>
-            <input className="min-h-11 border border-ink/15 px-4" name="title" onChange={(event) => setServiceForm((current) => ({ ...current, title: event.target.value }))} placeholder="Product title" required value={serviceForm.title} />
-            <input className="min-h-11 border border-ink/15 px-4" name="slug" onChange={(event) => setServiceForm((current) => ({ ...current, slug: event.target.value }))} placeholder="slug-name" required value={serviceForm.slug} />
-            <input className="min-h-11 border border-ink/15 px-4" name="category" onChange={(event) => setServiceForm((current) => ({ ...current, category: event.target.value }))} placeholder="Category" value={serviceForm.category} />
-            <input className="min-h-11 border border-ink/15 px-4" name="base_price" onChange={(event) => setServiceForm((current) => ({ ...current, base_price: event.target.value }))} placeholder="Base price" type="number" min="0" required value={serviceForm.base_price} />
-            <input className="min-h-11 border border-ink/15 px-4 lg:col-span-2" name="image_url" onChange={(event) => setServiceForm((current) => ({ ...current, image_url: event.target.value }))} placeholder="Image URL or upload below" value={serviceForm.image_url} />
-            <label className="flex min-h-11 cursor-pointer items-center justify-center border border-ink/15 px-4 text-sm font-bold text-ink transition hover:border-black/25">
-              Upload image
-              <input
-                accept="image/*"
-                className="sr-only"
-                name="image_file"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    uploadProductImage(file);
-                  }
-                }}
-                type="file"
-              />
-            </label>
-            <label className="flex min-h-11 items-center gap-3 border border-ink/15 px-4 text-sm text-graphite">
-              <input checked={serviceForm.is_featured} name="is_featured" onChange={(event) => setServiceForm((current) => ({ ...current, is_featured: event.target.checked }))} type="checkbox" /> Featured
-            </label>
-            {serviceForm.image_url ? (
-              <div className="relative aspect-[16/9] overflow-hidden border border-ink/10 bg-mist lg:col-span-3">
-                <Image alt="Product preview" className="h-full w-full object-cover" fill sizes="(min-width: 1024px) 60vw, 100vw" src={serviceForm.image_url} />
-              </div>
-            ) : null}
-            <textarea className="min-h-24 border border-ink/15 p-4 lg:col-span-3" name="description" onChange={(event) => setServiceForm((current) => ({ ...current, description: event.target.value }))} placeholder="Product description" value={serviceForm.description} />
-            <textarea className="min-h-28 border border-ink/15 p-4 lg:col-span-3" name="specifications" onChange={(event) => setServiceForm((current) => ({ ...current, specifications: event.target.value }))} placeholder="Specifications, one per line. Example: Paper: 300gsm cardstock" value={serviceForm.specifications} />
-          </>
-        ) : (
-          <>
-            <input className="min-h-11 border border-ink/15 px-4" name="name" placeholder="Name" required />
-            <input className="min-h-11 border border-ink/15 px-4" name="type" placeholder="Type" />
-            <input className="min-h-11 border border-ink/15 px-4" name="size" placeholder="Size" />
-            <input className="min-h-11 border border-ink/15 px-4" name="finish" placeholder="Finish" />
-            <input className="min-h-11 border border-ink/15 px-4" name="price_modifier" placeholder="Price modifier" type="number" min="0" required />
-            <textarea className="min-h-24 border border-ink/15 p-4 lg:col-span-3" name="description" placeholder="Description" />
-          </>
-        )}
-        <div className="flex flex-col gap-3 lg:col-span-3 sm:flex-row">
-          <button className="min-h-11 flex-1 bg-[var(--solid)] px-5 text-sm font-bold text-[var(--solid-text)] disabled:cursor-not-allowed disabled:bg-neutral-400" disabled={isSaving} type="submit">
-            {editingServiceId ? `Update ${type === "services" ? "service" : "material"}` : `Add ${type === "services" ? "services" : "material"}`}
-          </button>
-          {editingServiceId ? (
-            <button
-              className="min-h-11 border border-black/10 px-5 text-sm font-bold text-ink"
-              onClick={() => {
-                setEditingServiceId(null);
-                setServiceForm(emptyServiceForm);
-              }}
-              type="button"
-            >
-              Cancel edit
-            </button>
-          ) : null}
+
+      <AdminToolbar>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <input className={cx(adminInputClass, "sm:max-w-md")} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${type}`} type="search" value={query} />
+          <p className="text-sm font-black text-graphite">{isLoading ? "Loading..." : `${visibleItems.length} ${isServices ? "services" : "materials"}`}</p>
         </div>
-      </form>
-      {error ? <p className="mt-8 border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
-      {!error && !isLoading && items.length === 0 ? <p className="mt-8 border border-black/10 bg-white p-5 text-sm text-graphite">No items yet.</p> : null}
-      <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {items.map((item) => (
-          <article key={item.id} className="overflow-hidden border border-ink/10 bg-white shadow-sm">
+      </AdminToolbar>
+
+      {!error && !isLoading && visibleItems.length === 0 ? (
+        <AdminEmptyState title={`No ${type} found`} description="Create a new record or adjust the search filter." />
+      ) : null}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {visibleItems.map((item) => (
+          <AdminPanel className="overflow-hidden" key={item.id}>
             {"image_url" in item && item.image_url ? (
-              <div className="relative aspect-[4/3] bg-mist">
+              <div className="relative aspect-[16/9] border-b border-[var(--line)] bg-mist">
                 <Image alt={`${item.title} product`} className="h-full w-full object-cover" fill sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" src={item.image_url} />
               </div>
             ) : null}
-            <div className="p-5">
-            <h2 className="text-lg font-semibold text-ink">{"title" in item ? item.title : item.name}</h2>
-            <p className="mt-2 text-sm leading-6 text-graphite">{"category" in item ? item.category : item.type}</p>
-            <p className="mt-3 line-clamp-3 text-sm leading-6 text-graphite">{item.description}</p>
-            {"specifications" in item && item.specifications ? (
-              <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm leading-6 text-graphite">{item.specifications}</p>
-            ) : null}
-            <div className="mt-5 flex gap-2">
-              <button className="rounded-full border border-black/10 px-4 py-2 text-sm text-ink" onClick={() => editItem(item)} type="button">
-                Edit
-              </button>
-              <button className="rounded-full border border-black/10 px-4 py-2 text-sm text-ink" onClick={() => deleteItem(item.id)} type="button">
-                Delete
-              </button>
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-black uppercase tracking-[0.08em] text-press">{"title" in item ? item.category ?? "Service" : item.type ?? "Material"}</p>
+                  <h2 className="mt-2 text-lg font-black text-ink">{"title" in item ? item.title : item.name}</h2>
+                </div>
+                {"is_featured" in item && item.is_featured ? <span className="rounded-md bg-press/10 px-2 py-1 text-xs font-black text-press">Featured</span> : null}
+              </div>
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-graphite">{item.description || "No description yet."}</p>
+              {"specifications" in item && item.specifications ? <p className="mt-3 line-clamp-3 whitespace-pre-line text-xs font-semibold leading-5 text-graphite">{item.specifications}</p> : null}
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-mist p-3 text-sm font-black text-ink">
+                <span>{"base_price" in item ? "Base price" : "Modifier"}</span>
+                <span>NPR {Number("base_price" in item ? item.base_price : item.price_modifier).toLocaleString("en-IN")}</span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <AdminButton onClick={() => editItem(item)} variant="secondary">Edit</AdminButton>
+                <AdminButton onClick={() => deleteItem(item.id)} variant="danger">Delete</AdminButton>
+              </div>
             </div>
-            </div>
-          </article>
+          </AdminPanel>
         ))}
       </div>
     </section>

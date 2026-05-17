@@ -1,53 +1,11 @@
-import { WEDDING_CARD_TEMPLATE, WEDDING_CARD_TEMPLATE_ID } from "./wedding-card-template";
-import { WEDDING_CARD_2, WEDDING_CARD_3 } from "./wedding-card-variants";
-import { STUDENT_ID_CARD_TEMPLATE, STUDENT_ID_CARD_TEMPLATE_ID } from "./student-id-card-template";
-import { STUDENT_ID_1, STUDENT_ID_2, STUDENT_ID_3 } from "./student-id-card-variants";
-import { BUSINESS_CARD_1, BUSINESS_CARD_2, BUSINESS_CARD_3 } from "./business-card-templates";
-import { BIRTHDAY_CARD_1, BIRTHDAY_CARD_2, BIRTHDAY_CARD_3 } from "./birthday-card-variants";
-import { LAPTOP_SKIN_1, LAPTOP_SKIN_2, LAPTOP_SKIN_3 } from "./laptop-skin-variants";
-import { STICKER_1, STICKER_2, STICKER_3 } from "./sticker-variants";
-import { PRINT_ARTICLE_TEMPLATES } from "./print-article-templates";
+import { GENERATED_ID_CARD_TEMPLATE, GENERATED_ID_CARD_TEMPLATE_ID, GENERATED_ID_CARD_TEMPLATES } from "./generated-id-card-template";
 import type { ProductTemplateWithService } from "@/lib/supabase/queries";
 
-export const LOCAL_TEMPLATE_CATALOG: ProductTemplateWithService[] = [
-  WEDDING_CARD_TEMPLATE,
-  WEDDING_CARD_2,
-  WEDDING_CARD_3,
-  STUDENT_ID_CARD_TEMPLATE,
-  STUDENT_ID_1,
-  STUDENT_ID_2,
-  STUDENT_ID_3,
-  BUSINESS_CARD_1,
-  BUSINESS_CARD_2,
-  BUSINESS_CARD_3,
-  BIRTHDAY_CARD_1,
-  BIRTHDAY_CARD_2,
-  BIRTHDAY_CARD_3,
-  LAPTOP_SKIN_1,
-  LAPTOP_SKIN_2,
-  LAPTOP_SKIN_3,
-  STICKER_1,
-  STICKER_2,
-  STICKER_3,
-  ...PRINT_ARTICLE_TEMPLATES
-];
+export const LOCAL_TEMPLATE_CATALOG: ProductTemplateWithService[] = GENERATED_ID_CARD_TEMPLATES;
 
 const categoryAliases = {
-  wedding: "wedding card wedding invitation marriage invitation invite bridal ceremony",
   "id-card": "id card student id card identity card student identity card school card",
-  "student-id": "student id card student identity card id card school card identity",
-  business: "business card visiting card professional card corporate card",
-  birthday: "birthday card birthday invitation party invite celebration",
-  sticker: "sticker label sticker badge decal vinyl",
-  "laptop-skin": "laptop skin laptop wrapper skin cover laptop sticker",
-  brochure: "brochure tri fold company profile service leaflet marketing",
-  flyer: "flyer pamphlet leaflet handbill poster marketing event promotion",
-  poster: "poster wall poster event launch sale advertisement marketing",
-  certificate: "certificate award achievement training completion document",
-  letterhead: "letterhead company stationery official business paper",
-  booklet: "booklet catalog catalogue profile manual magazine document",
-  menu: "menu restaurant cafe food hospitality rate card",
-  postcard: "postcard promo card mailer marketing campaign"
+  "student-id": "student id card student identity card id card school card identity"
 } as const;
 
 function normalizeSearchText(value: string) {
@@ -137,24 +95,7 @@ export function searchLocalTemplates(query: string) {
 }
 
 export {
-  WEDDING_CARD_TEMPLATE,
-  WEDDING_CARD_TEMPLATE_ID,
-  STUDENT_ID_CARD_TEMPLATE,
-  STUDENT_ID_CARD_TEMPLATE_ID,
-  STUDENT_ID_1,
-  STUDENT_ID_2,
-  STUDENT_ID_3,
-  BUSINESS_CARD_1,
-  BUSINESS_CARD_2,
-  BUSINESS_CARD_3,
-  BIRTHDAY_CARD_1,
-  BIRTHDAY_CARD_2,
-  BIRTHDAY_CARD_3,
-  LAPTOP_SKIN_1,
-  LAPTOP_SKIN_2,
-  LAPTOP_SKIN_3,
-  STICKER_1,
-  STICKER_2,
-  STICKER_3,
-  PRINT_ARTICLE_TEMPLATES
+  GENERATED_ID_CARD_TEMPLATE,
+  GENERATED_ID_CARD_TEMPLATE_ID,
+  GENERATED_ID_CARD_TEMPLATES
 };

@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { finalPdfPath } from "@/lib/file-paths";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { estimateCompletionMinutes, estimateDeliveryMinutes, haversineDistanceKm } from "@/lib/location/distance";
+import { imageDataUrlToPdfBuffer } from "@/lib/pdf";
 import { getLocalTemplateByIdentifier } from "@/lib/templates/catalog";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
-function dataUrlToBuffer(dataUrl: string) {
-  const [, base64 = ""] = dataUrl.split(",");
-  return Buffer.from(base64, "base64");
-}
+const FINAL_DESIGNS_BUCKET = "final-designs";
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+async function ensureFinalDesignsBucket(supabase: ReturnType<typeof createAdminSupabaseClient>) {
+  const { data } = await supabase.storage.getBucket(FINAL_DESIGNS_BUCKET);
+
+  if (!data) {
+    await supabase.storage.createBucket(FINAL_DESIGNS_BUCKET, {
+      public: true,
+      fileSizeLimit: 25 * 1024 * 1024,
+      allowedMimeTypes: ["application/pdf"]
+    });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -53,15 +64,18 @@ export async function POST(request: NextRequest) {
   const templateCategory = template?.category ?? localTemplate?.category ?? body.template_category ?? null;
   const templateServiceTitle = template?.services?.title ?? body.template_service_title ?? null;
   const templateForCompletion = templateServiceTitle ?? templateTitle;
+  const orderId = crypto.randomUUID();
 
   let finalDesignUrl: string | null = null;
 
-  if (typeof body.final_design_png === "string" && body.final_design_png.startsWith("data:image/png")) {
-    const path = `${crypto.randomUUID()}.png`;
+  if (typeof body.final_design_png === "string" && body.final_design_png.startsWith("data:image/")) {
+    await ensureFinalDesignsBucket(supabase);
+    const path = finalPdfPath(orderId, body.customer_name ?? "customer", templateTitle);
+    const finalPdf = await imageDataUrlToPdfBuffer(body.final_design_png);
     const { error: uploadError } = await supabase.storage
-      .from("final-designs")
-      .upload(path, dataUrlToBuffer(body.final_design_png), {
-        contentType: "image/png",
+      .from(FINAL_DESIGNS_BUCKET)
+      .upload(path, finalPdf, {
+        contentType: "application/pdf",
         upsert: false
       });
 
@@ -69,7 +83,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    const { data } = supabase.storage.from("final-designs").getPublicUrl(path);
+    const { data } = supabase.storage.from(FINAL_DESIGNS_BUCKET).getPublicUrl(path);
     finalDesignUrl = data.publicUrl;
   }
 
@@ -87,6 +101,7 @@ export async function POST(request: NextRequest) {
   const { data: orderResult, error } = await supabase
     .from("orders")
     .insert({
+      id: orderId,
       customer_name: body.customer_name,
       email: body.email,
       phone: body.phone,

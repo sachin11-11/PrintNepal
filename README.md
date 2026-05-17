@@ -73,18 +73,17 @@ The server action creates the bucket automatically if it does not exist. Admins 
 
 ## Admin Setup
 
-Admin login uses Supabase Auth. After creating an auth user in Supabase, add/update a matching `profiles` row:
+Admin login uses the configured PrintNepal admin credentials:
 
-```sql
-insert into public.profiles (id, email, full_name, role)
-values ('AUTH_USER_ID', 'admin@example.com', 'PrintNepal Admin', 'admin')
-on conflict (id) do update set role = 'admin';
+```env
+ADMIN_EMAIL=printshopnepal@gmail.com
+ADMIN_PASSWORD=printshopadmin@123
+ADMIN_SESSION_SECRET=replace-with-a-long-random-secret
 ```
 
-Admin API routes verify:
+Admin API routes accept the signed PrintNepal admin session token. Supabase Auth admin sessions with `profiles.role = 'admin'` are still supported as a fallback.
 
-1. Valid Supabase Auth access token.
-2. `profiles.role = 'admin'`.
+`SUPABASE_SERVICE_ROLE_KEY` is still required on the server because admin routes use it for database and storage operations.
 
 ## Main Routes
 
